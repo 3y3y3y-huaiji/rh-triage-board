@@ -8,6 +8,8 @@ import {
   formatCompactNumber,
   formatNumber,
   formatRebaseTarget,
+  formatRelativeAge,
+  formatUtcShort,
   safeHref,
 } from './html';
 
@@ -36,15 +38,27 @@ describe('views structural & security contracts', () => {
     expect(formatCompactNumber(162028)).toBe('162k');
     expect(formatRebaseTarget('main', '73958da')).toBe('main (73958da)');
     expect(formatRebaseTarget('PR #669 (codex/clump)', 'PR#669')).toBe('PR #669 (codex/clump)');
+    expect(formatUtcShort('2026-11-24T10:16:16Z')).toBe('Nov 24, 10:16 UTC');
+
+    const enRel = getMessages('en').relativeTime;
+    const baseMs = Date.parse('2026-11-24T10:30:00Z');
+    expect(formatRelativeAge('2026-11-24T10:29:40Z', enRel, baseMs)).toBe('<1m ago');
+    expect(formatRelativeAge('2026-11-24T10:18:00Z', enRel, baseMs)).toBe('12m ago');
+    expect(formatRelativeAge('2026-11-24T08:00:00Z', enRel, baseMs)).toBe('2h ago');
+    expect(formatRelativeAge('2026-11-22T10:00:00Z', enRel, baseMs)).toBe('2d ago');
   });
 
-  it('渲染全景四栏、Mega-Refactor 预警、Batch 收编徽章、Agent 入口与生态链接', () => {
+  it('渲染全景四栏、Pin 刷新栏、Mega-Refactor 预警、Batch 收编徽章、Agent 入口与生态链接', () => {
     const board = analyzeBoard(MOCK_BOARD_SNAPSHOT);
     const html = renderBoardShell(board, 'http-error', baseState(), getMessages('zh'));
 
+    expect(html).toContain('data-testid="pinned-refresh-bar"');
+    expect(html).toContain('datetime="2026-11-24T09:30:00Z"');
+    expect(html).toContain('>Nov 24, 09:30 UTC</time>');
+    expect(html).toContain('data-action="refresh-board"');
     expect(html).toContain('data-testid="data-source-badge"');
     expect(html).toContain('data-testid="refresh-interval-badge"');
-    expect(html).toContain('每 15 分钟自动刷新');
+    expect(html).toContain('每 15 分钟自动轮询');
     expect(html).toContain('data-testid="mega-refactor-banner"');
     expect(html).toContain('Mega-Refactor');
     expect(html).toContain('data-testid="subsumed-badge"');
