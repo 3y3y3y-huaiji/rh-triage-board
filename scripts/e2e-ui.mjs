@@ -56,18 +56,31 @@ const assertLayout = async (page, label) => {
   const layout = await page.evaluate(() => {
     const doc = globalThis.document;
     const h1s = doc.querySelectorAll('h1');
+    const pinnedBar = doc.querySelector('[data-testid="pinned-refresh-bar"]');
+    const pinnedRect = pinnedBar ? pinnedBar.getBoundingClientRect() : null;
     const banner = doc.querySelector('[data-testid="mega-refactor-banner"]');
     const bannerRight = banner ? banner.getBoundingClientRect().right : 0;
     return {
       scrollWidth: doc.documentElement.scrollWidth,
       innerWidth: globalThis.window.innerWidth,
       h1Count: h1s.length,
+      hasPinnedBar: Boolean(pinnedBar),
+      pinnedWidth: pinnedRect ? pinnedRect.width : 0,
+      pinnedRight: pinnedRect ? pinnedRect.right : 0,
       bannerRight,
     };
   });
   if (layout.scrollWidth > layout.innerWidth + 1) {
     throw new Error(
       `${label} 横向溢出: scrollWidth=${layout.scrollWidth} > innerWidth=${layout.innerWidth}`,
+    );
+  }
+  if (!layout.hasPinnedBar || layout.pinnedWidth <= 0) {
+    throw new Error(`${label} 缺少置顶刷新栏 [data-testid="pinned-refresh-bar"]`);
+  }
+  if (layout.pinnedRight > layout.innerWidth + 1) {
+    throw new Error(
+      `${label} 置顶刷新栏右越界: right=${layout.pinnedRight} > innerWidth=${layout.innerWidth}`,
     );
   }
   if (layout.bannerRight > layout.innerWidth + 1) {
@@ -204,10 +217,18 @@ const main = async () => {
       await page.click('[data-action="toggle-section"][data-section="needs-rebase"]');
       await assertLayout(page, `${vp.name} expanded-rebase`);
 
-      // 验证暗色主题切换与 color-scheme
+      // 验证暗色主题切换与回切浅色主题
       await page.click('[data-action="set-theme"][data-theme="dark"]');
       await page.waitForFunction(
-        () => globalThis.document.documentElement.style.colorScheme === 'dark',
+        () =>
+          globalThis.document.documentElement.style.colorScheme === 'dark' &&
+          globalThis.document.documentElement.classList.contains('dark'),
+      );
+      await page.click('[data-action="set-theme"][data-theme="light"]');
+      await page.waitForFunction(
+        () =>
+          globalThis.document.documentElement.style.colorScheme === 'light' &&
+          !globalThis.document.documentElement.classList.contains('dark'),
       );
 
       // 验证多语种切换（en / ja）

@@ -1,0 +1,3 @@
+# 统一使用 LF：Prettier 默认 endOfLine 为 lf，
+# 避免 Windows 环境检出转为 CRLF 导致本地 pnpm run format:check 失败。
+* text=auto eol=lf

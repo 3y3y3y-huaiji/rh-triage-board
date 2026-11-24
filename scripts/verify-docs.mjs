@@ -40,7 +40,7 @@ const collectSubAgents = (dir, out) => {
 /** 收集受 Docs-as-Code 校验的活文档（相对路径，正斜杠）。 */
 export const collectLiveDocs = (rootDir) => {
   const files = [];
-  for (const name of ['AGENTS.md', 'README.md', 'README.en.md']) {
+  for (const name of ['AGENTS.md', 'README.md', 'README.en.md', 'SECURITY.md']) {
     const full = resolve(rootDir, name);
     if (existsSync(full)) files.push(full);
   }

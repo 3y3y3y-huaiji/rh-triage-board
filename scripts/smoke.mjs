@@ -15,10 +15,21 @@ const assertOk = async (url, label) => {
 
 const main = async () => {
   const homeRes = await assertOk(`${origin}/`, '首页');
+  const csp = homeRes.headers.get('content-security-policy');
+  const nosniff = homeRes.headers.get('x-content-type-options');
+  if (!csp || !csp.includes("connect-src 'self'")) {
+    throw new Error(`首页缺少预期 Content-Security-Policy 头: ${csp ?? '(null)'}`);
+  }
+  if (nosniff !== 'nosniff') {
+    throw new Error(`首页缺少 X-Content-Type-Options: nosniff (实际: ${nosniff ?? '(null)'})`);
+  }
   const html = await homeRes.text();
   if (!html.includes('id="app"')) {
     throw new Error('首页 HTML 缺少挂载节点 id="app"');
   }
+
+  await assertOk(`${origin}/favicon.svg`, '站点图标');
+  await assertOk(`${origin}/robots.txt`, 'Robots 声明');
 
   const llmsRes = await assertOk(`${origin}/llms.txt`, 'Agent 说明文件');
   const llmsText = await llmsRes.text();

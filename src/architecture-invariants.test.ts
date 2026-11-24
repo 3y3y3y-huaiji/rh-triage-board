@@ -75,4 +75,20 @@ describe('架构与纯静态边界不变量', () => {
       }
     }
   });
+
+  it('所有第三方 GitHub Action 必须锁定 40 位 commit SHA', () => {
+    for (const [path, content] of Object.entries(WORKFLOW_MODULES)) {
+      for (const match of content.matchAll(/^\s*-?\s*uses:\s*([^\s#]+)/gm)) {
+        const target = match[1]!;
+        if (target.startsWith('./')) continue;
+        expect(target, `${path} -> ${target}`).toMatch(/@[0-9a-f]{40}$/);
+      }
+    }
+  });
+
+  it('仓库根目录必须具备双协议与安全政策治理文件', () => {
+    expect(existsSync(resolve('LICENSE'))).toBe(true);
+    expect(existsSync(resolve('LICENSE-MULAN'))).toBe(true);
+    expect(existsSync(resolve('SECURITY.md'))).toBe(true);
+  });
 });

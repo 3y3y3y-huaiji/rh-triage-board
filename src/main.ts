@@ -107,15 +107,6 @@ const bootstrap = async (): Promise<void> => {
         // 忽略受限存储环境
       }
       render();
-    } else if (target.id === 'theme-select' && target instanceof HTMLSelectElement) {
-      const value = target.value;
-      state.theme = value === 'light' || value === 'dark' ? value : 'system';
-      try {
-        window.localStorage.setItem(STORAGE_THEME_KEY, state.theme);
-      } catch {
-        // 忽略受限存储环境
-      }
-      render();
     } else if (target.id === 'topic-select' && target instanceof HTMLSelectElement) {
       state.topic = target.value as TopicClusterId | 'all';
       render();
@@ -180,6 +171,10 @@ const bootstrap = async (): Promise<void> => {
     fallbackReason = loaded.fallbackReason;
     render();
   };
+
+  window.matchMedia?.('(prefers-color-scheme: dark)').addEventListener?.('change', () => {
+    if (state.theme === 'system') applyTheme('system');
+  });
 
   window.setInterval(() => {
     const ageEl = root.querySelector<HTMLElement>('[data-role="relative-age"]');
