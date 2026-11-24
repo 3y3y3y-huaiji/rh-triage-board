@@ -7,7 +7,17 @@ export interface Messages {
   dataSourceLive: string;
   dataSourceMock: string;
   updatedAtLabel: string;
+  lastSyncedLabel: string;
+  lastCommitLabel: string;
   refreshIntervalLabel: string;
+  refreshNowLabel: string;
+  unofficialBadge: string;
+  relativeTime: {
+    justNow: string;
+    minutesAgo: string;
+    hoursAgo: string;
+    daysAgo: string;
+  };
   loadingSnapshot: string;
   headerMoreLinks: string;
   filesUnit: string;

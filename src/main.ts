@@ -13,6 +13,7 @@ import {
   type BoardUiState,
 } from './views/board-shell';
 import type { ThemePreference } from './views/header';
+import { formatRelativeAge } from './views/html';
 
 const STORAGE_LOCALE_KEY = 'rh-board-locale';
 const STORAGE_THEME_KEY = 'rh-board-theme';
@@ -159,6 +160,8 @@ const bootstrap = async (): Promise<void> => {
       if (expandedSections.has(key)) expandedSections.delete(key);
       else expandedSections.add(key);
       render();
+    } else if (action === 'refresh-board') {
+      void refreshSnapshot();
     } else if (action === 'copy-agent-prompt') {
       const prompt = state.locale === 'zh' ? AGENT_COPY_PROMPT_ZH : AGENT_COPY_PROMPT_EN;
       void navigator.clipboard?.writeText(prompt).catch(() => undefined);
@@ -171,12 +174,24 @@ const bootstrap = async (): Promise<void> => {
     }
   });
 
-  render();
+  const refreshSnapshot = async (): Promise<void> => {
+    const loaded = await loadBoardSnapshot();
+    board = analyzeBoard(loaded.snapshot);
+    fallbackReason = loaded.fallbackReason;
+    render();
+  };
 
-  const loaded = await loadBoardSnapshot();
-  board = analyzeBoard(loaded.snapshot);
-  fallbackReason = loaded.fallbackReason;
+  window.setInterval(() => {
+    const ageEl = root.querySelector<HTMLElement>('[data-role="relative-age"]');
+    const iso = ageEl?.dataset.iso;
+    if (ageEl && iso) {
+      const messages = getMessages(state.locale);
+      ageEl.textContent = `(${formatRelativeAge(iso, messages.relativeTime)})`;
+    }
+  }, 30_000);
+
   render();
+  await refreshSnapshot();
 };
 
 void bootstrap();
