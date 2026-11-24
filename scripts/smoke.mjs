@@ -26,6 +26,9 @@ const main = async () => {
     throw new Error('/llms.txt 未包含 /data/board.json 指引');
   }
 
+  await assertOk(`${origin}/skills/lean-proof-golfing.md`, 'Lean Proof Golfing Skill');
+  await assertOk(`${origin}/skills/mathlib-pr-conventions.md`, 'Mathlib PR Conventions Skill');
+
   const dataRes = await assertOk(`${origin}/data/board.json`, '静态数据快照');
   const data = await dataRes.json();
   if (

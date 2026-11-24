@@ -7,6 +7,9 @@ export const en: Messages = {
   dataSourceLive: 'Live Static Snapshot (/data/board.json)',
   dataSourceMock: 'Offline Mock Fallback',
   updatedAtLabel: 'Snapshot',
+  loadingSnapshot: 'Loading live triage snapshot…',
+  headerMoreLinks: 'Ecosystem & Agent Feeds',
+  filesUnit: 'files',
   themeLabel: 'Theme',
   themeLight: 'Light',
   themeDark: 'Dark',
@@ -23,8 +26,20 @@ export const en: Messages = {
   recommendedRebaseLabel: 'Rebase onto',
   megaRefactorBannerTitle: 'Mega-Refactor / Global Conflict Risk',
   megaRefactorBannerDesc:
-    'Detected PRs with GitHub diff overflow or zero reported files (e.g. repo-wide clumping). Never assume zero conflict; pause or rebase onto the queue head.',
-  megaRefactorBadge: 'Mega-Refactor / Global Conflict Risk',
+    'Detected PRs with GitHub diff overflow or massive repo-wide clumping. Never assume zero conflict; pause or rebase onto the queue head.',
+  megaRefactorBadge: 'Mega-Refactor',
+  diffStatusLabels: {
+    overflow: 'Diff Overflow',
+    truncated: 'Truncated Diff',
+    massive: 'Massive Refactor',
+  },
+  pagination: {
+    showMorePrefix: 'Show more',
+    showAll: 'Show all',
+    collapse: 'Collapse',
+    showingOf: 'Showing',
+    moreItemsPrefix: '+',
+  },
   stats: {
     openPrs: 'Open PRs',
     queued: 'Queued',

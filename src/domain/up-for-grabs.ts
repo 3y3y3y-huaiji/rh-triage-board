@@ -74,7 +74,7 @@ const CURATED_STARTER_TRACKS: Array<{
     url: 'https://github.com/leanprover-community/riemann-hypothesis/issues/229',
     labels: ['documentation', 'triage'],
     computeTier: 'no-compile',
-    targetPaths: ['docs/', 'README.md'],
+    targetPaths: ['docs/bibliography', 'rh-triage-board'],
   },
 ];
 

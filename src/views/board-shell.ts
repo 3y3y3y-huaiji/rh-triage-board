@@ -1,5 +1,5 @@
 import type { BoardFallbackReason } from '../data/load-board';
-import type { AnalyzedBoard, ComputeTier, TopicClusterId } from '../domain/types';
+import type { AnalyzedBoard, BoardSnapshot, ComputeTier, TopicClusterId } from '../domain/types';
 import type { Locale, Messages } from '../i18n/types';
 import { renderHeader, type ThemePreference } from './header';
 import { escapeHtml } from './html';
@@ -20,6 +20,7 @@ export interface BoardUiState {
   computeTier: ComputeTier | 'all';
   hideSubsumed: boolean;
   promptCopied: boolean;
+  expandedSections: ReadonlySet<string>;
 }
 
 const TOPIC_OPTIONS: TopicClusterId[] = [
@@ -30,6 +31,26 @@ const TOPIC_OPTIONS: TopicClusterId[] = [
   'math-refactor',
 ];
 
+export const renderLoadingShell = (
+  placeholderSnapshot: BoardSnapshot,
+  state: BoardUiState,
+  messages: Messages,
+): string => `<div class="min-h-screen flex flex-col">
+  ${renderHeader({
+    snapshot: placeholderSnapshot,
+    fallbackReason: null,
+    locale: state.locale,
+    theme: state.theme,
+    messages,
+    loading: true,
+  })}
+  <main class="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6">
+    <div class="rounded-xl border border-zinc-200 bg-white p-6 text-center text-sm text-zinc-500 shadow-2xs dark:border-zinc-800 dark:bg-zinc-900/70 dark:text-zinc-400">
+      ${escapeHtml(messages.loadingSnapshot)}
+    </div>
+  </main>
+</div>`;
+
 export const renderBoardShell = (
   board: AnalyzedBoard,
   fallbackReason: BoardFallbackReason,
@@ -37,41 +58,53 @@ export const renderBoardShell = (
   messages: Messages,
 ): string => {
   const { summary } = board;
-  const kpiCards: Array<{ label: string; value: number; accent: string }> = [
+  const kpiCards: Array<{
+    label: string;
+    value: number;
+    dot: string;
+    targetTab: BoardTab;
+  }> = [
     {
       label: messages.stats.openPrs,
       value: summary.totalOpenPrs,
-      accent: 'text-slate-900 dark:text-white',
+      dot: 'bg-zinc-400',
+      targetTab: 'all',
     },
     {
       label: messages.stats.queued,
       value: summary.queuedCount,
-      accent: 'text-indigo-700 dark:text-indigo-300',
+      dot: 'bg-indigo-500',
+      targetTab: 'merge-queue',
     },
     {
       label: messages.stats.megaRefactors,
       value: summary.megaRefactorCount,
-      accent: 'text-rose-700 dark:text-rose-300',
+      dot: 'bg-rose-500',
+      targetTab: 'conflict-radar',
     },
     {
       label: messages.stats.subsumed,
       value: summary.subsumedCount,
-      accent: 'text-violet-700 dark:text-violet-300',
+      dot: 'bg-violet-500',
+      targetTab: 'conflict-radar',
     },
     {
       label: messages.stats.collisions,
       value: summary.collisionGroupCount,
-      accent: 'text-amber-700 dark:text-amber-300',
+      dot: 'bg-amber-500',
+      targetTab: 'conflict-radar',
     },
     {
       label: messages.stats.needsRebase,
       value: summary.needsRebaseCount,
-      accent: 'text-orange-700 dark:text-orange-300',
+      dot: 'bg-orange-500',
+      targetTab: 'needs-rebase',
     },
     {
       label: messages.stats.safeStarters,
       value: summary.safeStarterCount,
-      accent: 'text-emerald-700 dark:text-emerald-300',
+      dot: 'bg-emerald-500',
+      targetTab: 'up-for-grabs',
     },
   ];
 
@@ -83,9 +116,15 @@ export const renderBoardShell = (
     { id: 'needs-rebase', label: messages.tabs.needsRebase },
   ];
 
+  const isOverview = state.activeTab === 'all';
   const mergeQueueHtml = renderMergeQueuePanel(
     board.mergeQueue,
-    { search: state.search, topic: state.topic },
+    {
+      search: state.search,
+      topic: state.topic,
+      defaultLimit: isOverview ? 6 : 12,
+      expandedSections: state.expandedSections,
+    },
     messages,
   );
   const upForGrabsHtml = renderUpForGrabsPanel(
@@ -97,23 +136,38 @@ export const renderBoardShell = (
   );
   const radarHtml = renderConflictRadarPanel(
     board,
-    { search: state.search, topic: state.topic, hideSubsumed: state.hideSubsumed },
+    {
+      search: state.search,
+      topic: state.topic,
+      hideSubsumed: state.hideSubsumed,
+      expandedSections: state.expandedSections,
+    },
     messages,
   );
   const rebaseHtml = renderNeedsRebasePanel(
     board.needsRebase,
-    { search: state.search, topic: state.topic, hideSubsumed: state.hideSubsumed },
+    {
+      search: state.search,
+      topic: state.topic,
+      hideSubsumed: state.hideSubsumed,
+      defaultLimit: isOverview ? 8 : 15,
+      expandedSections: state.expandedSections,
+    },
     messages,
   );
 
   const renderActivePanels = (): string => {
-    if (state.activeTab === 'all') {
-      return `<div class="grid grid-cols-1 gap-4 xl:grid-cols-2">
-      ${mergeQueueHtml}
-      ${radarHtml}
-      ${upForGrabsHtml}
-      ${rebaseHtml}
-    </div>`;
+    if (isOverview) {
+      return `<div class="grid grid-cols-1 items-start gap-4 xl:grid-cols-2">
+        <div class="space-y-4">
+          ${mergeQueueHtml}
+          ${upForGrabsHtml}
+        </div>
+        <div class="space-y-4">
+          ${radarHtml}
+          ${rebaseHtml}
+        </div>
+      </div>`;
     }
     if (state.activeTab === 'merge-queue') return mergeQueueHtml;
     if (state.activeTab === 'up-for-grabs') return upForGrabsHtml;
@@ -138,41 +192,49 @@ export const renderBoardShell = (
           .map(
             (
               card,
-            ) => `<div class="rounded-xl border border-slate-200 bg-white px-3 py-2.5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-              <div class="text-[11px] font-medium text-slate-500 dark:text-slate-400">${escapeHtml(card.label)}</div>
-              <div class="mt-0.5 font-mono text-xl font-bold ${card.accent}">${card.value}</div>
-            </div>`,
+              index,
+            ) => `<button type="button" data-action="set-tab" data-tab="${card.targetTab}" class="${
+              index === kpiCards.length - 1 ? 'col-span-2 sm:col-span-2 lg:col-span-1 ' : ''
+            }group rounded-xl border border-zinc-200/90 bg-white px-3 py-2.5 text-left shadow-2xs transition hover:border-zinc-300 dark:border-zinc-800 dark:bg-zinc-900/70 dark:hover:border-zinc-700">
+              <div class="flex items-center gap-1.5 text-[11px] font-medium text-zinc-500 dark:text-zinc-400">
+                <span class="h-1.5 w-1.5 rounded-full ${card.dot}"></span>
+                <span class="truncate">${escapeHtml(card.label)}</span>
+              </div>
+              <div class="mt-1 font-mono text-xl font-semibold tracking-tight text-zinc-950 tabular-nums dark:text-zinc-50">${card.value}</div>
+            </button>`,
           )
           .join('')}
       </section>
 
-      <section aria-label="Filters and navigation" class="mt-4 flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-3.5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-        <div class="flex flex-wrap items-center gap-1.5" role="tablist">
-          ${tabs
-            .map(
-              (tab) =>
-                `<button type="button" role="tab" aria-selected="${state.activeTab === tab.id}" data-action="set-tab" data-tab="${tab.id}" class="rounded-lg border px-3 py-1.5 text-xs font-semibold transition ${
-                  state.activeTab === tab.id
-                    ? 'border-indigo-600 bg-indigo-600 text-white'
-                    : 'border-slate-200 bg-slate-50 text-slate-700 hover:border-indigo-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300'
-                }">${escapeHtml(tab.label)}</button>`,
-            )
-            .join('')}
+      <section aria-label="Filters and navigation" class="mt-3.5 flex flex-col gap-2.5 rounded-xl border border-zinc-200/90 bg-white p-3 shadow-2xs dark:border-zinc-800 dark:bg-zinc-900/70">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div class="inline-flex flex-wrap items-center gap-1 rounded-lg border border-zinc-200/80 bg-zinc-100/80 p-1 dark:border-zinc-800 dark:bg-zinc-950/70" role="tablist">
+            ${tabs
+              .map(
+                (tab) =>
+                  `<button type="button" role="tab" aria-selected="${state.activeTab === tab.id}" data-action="set-tab" data-tab="${tab.id}" class="rounded-md px-2.5 py-1 text-xs font-medium transition ${
+                    state.activeTab === tab.id
+                      ? 'bg-white text-zinc-950 shadow-2xs dark:bg-zinc-800 dark:text-zinc-50'
+                      : 'text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-200'
+                  }">${escapeHtml(tab.label)}</button>`,
+              )
+              .join('')}
+          </div>
+          <label class="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-zinc-200/80 bg-zinc-50/70 px-2.5 py-1.5 text-xs font-medium text-zinc-600 transition hover:text-zinc-900 dark:border-zinc-800 dark:bg-zinc-950/60 dark:text-zinc-300">
+            <input id="hide-subsumed-toggle" type="checkbox" ${state.hideSubsumed ? 'checked' : ''} class="accent-indigo-600" />
+            <span>${escapeHtml(messages.filters.hideSubsumed)}</span>
+          </label>
         </div>
 
-        <div class="flex flex-col gap-2.5 md:flex-row md:items-center">
-          <input id="board-search" type="search" value="${escapeHtml(state.search)}" placeholder="${escapeHtml(messages.filters.searchPlaceholder)}" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm text-slate-900 outline-none focus:border-indigo-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 md:flex-1" />
-          <select id="topic-select" aria-label="${escapeHtml(messages.filters.allTopics)}" class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-800 outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100">
+        <div class="flex flex-col gap-2 md:flex-row md:items-center">
+          <input id="board-search" type="search" value="${escapeHtml(state.search)}" placeholder="${escapeHtml(messages.filters.searchPlaceholder)}" class="w-full rounded-lg border border-zinc-200 bg-zinc-50/60 px-3 py-1.5 text-sm text-zinc-900 placeholder:text-zinc-400 outline-none transition focus:border-indigo-500 focus:bg-white dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder:text-zinc-500 dark:focus:border-indigo-400 md:flex-1" />
+          <select id="topic-select" aria-label="${escapeHtml(messages.filters.allTopics)}" class="cursor-pointer rounded-lg border border-zinc-200 bg-zinc-50/60 px-3 py-1.5 text-xs font-medium text-zinc-800 outline-none dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100">
             <option value="all" ${state.topic === 'all' ? 'selected' : ''}>${escapeHtml(messages.filters.allTopics)}</option>
             ${TOPIC_OPTIONS.map(
               (topicId) =>
                 `<option value="${topicId}" ${state.topic === topicId ? 'selected' : ''}>${escapeHtml(messages.topics[topicId])}</option>`,
             ).join('')}
           </select>
-          <label class="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300">
-            <input id="hide-subsumed-toggle" type="checkbox" ${state.hideSubsumed ? 'checked' : ''} class="accent-indigo-600" />
-            <span>${escapeHtml(messages.filters.hideSubsumed)}</span>
-          </label>
         </div>
       </section>
 

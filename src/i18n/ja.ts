@@ -7,6 +7,9 @@ export const ja: Messages = {
   dataSourceLive: '静的ライブスナップショット (/data/board.json)',
   dataSourceMock: 'オフライン Mock フォールバック',
   updatedAtLabel: '更新日時',
+  loadingSnapshot: '最新スナップショットを読み込み中…',
+  headerMoreLinks: 'エコシステム & Agent 入口',
+  filesUnit: 'ファイル',
   themeLabel: 'テーマ',
   themeLight: 'ライト',
   themeDark: 'ダーク',
@@ -22,8 +25,20 @@ export const ja: Messages = {
   recommendedRebaseLabel: '推奨 Rebase 先',
   megaRefactorBannerTitle: 'Mega-Refactor / 全域コンフリクト警告',
   megaRefactorBannerDesc:
-    'Diff オーバーフローまたは変更ファイル数 0 の大規模リファクタ PR を検出しました。競合なしと誤認せず、キュー先頭へ追従してください。',
-  megaRefactorBadge: 'Mega-Refactor / Global Conflict Risk',
+    'Diff オーバーフローまたは大規模リファクタ PR を検出しました。競合なしと誤認せず、キュー先頭へ追従してください。',
+  megaRefactorBadge: 'Mega-Refactor',
+  diffStatusLabels: {
+    overflow: 'Diff 超過',
+    truncated: 'Diff 省略',
+    massive: '大規模リファクタ',
+  },
+  pagination: {
+    showMorePrefix: 'さらに表示',
+    showAll: 'すべて表示',
+    collapse: '折りたたむ',
+    showingOf: '表示中',
+    moreItemsPrefix: '+',
+  },
   stats: {
     openPrs: 'Open PRs',
     queued: 'キュー中',

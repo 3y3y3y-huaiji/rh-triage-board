@@ -10,7 +10,13 @@ import { resolve } from 'node:path';
 const distDir = resolve('dist');
 const errors = [];
 
-const requiredFiles = ['index.html', '_headers', 'llms.txt'];
+const requiredFiles = [
+  'index.html',
+  '_headers',
+  'llms.txt',
+  'skills/lean-proof-golfing.md',
+  'skills/mathlib-pr-conventions.md',
+];
 for (const file of requiredFiles) {
   const full = resolve(distDir, file);
   if (!existsSync(full)) {

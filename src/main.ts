@@ -6,7 +6,12 @@ import type { AnalyzedBoard, ComputeTier, TopicClusterId } from './domain/types'
 import { getMessages, normalizeLocale } from './i18n';
 import type { Locale } from './i18n/types';
 import './index.css';
-import { renderBoardShell, type BoardTab, type BoardUiState } from './views/board-shell';
+import {
+  renderBoardShell,
+  renderLoadingShell,
+  type BoardTab,
+  type BoardUiState,
+} from './views/board-shell';
 import type { ThemePreference } from './views/header';
 
 const STORAGE_LOCALE_KEY = 'rh-board-locale';
@@ -16,6 +21,7 @@ const applyTheme = (theme: ThemePreference): void => {
   const prefersDark = window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false;
   const isDark = theme === 'dark' || (theme === 'system' && prefersDark);
   document.documentElement.classList.toggle('dark', isDark);
+  document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
 };
 
 const readStoredLocale = (): Locale => {
@@ -42,8 +48,9 @@ const bootstrap = async (): Promise<void> => {
   const root = document.getElementById('app');
   if (!root) return;
 
-  let board: AnalyzedBoard = analyzeBoard(MOCK_BOARD_SNAPSHOT);
+  let board: AnalyzedBoard | null = null;
   let fallbackReason: BoardFallbackReason = null;
+  const expandedSections = new Set<string>();
 
   const state: BoardUiState = {
     locale: readStoredLocale(),
@@ -54,12 +61,18 @@ const bootstrap = async (): Promise<void> => {
     computeTier: 'all',
     hideSubsumed: false,
     promptCopied: false,
+    expandedSections,
   };
 
   const render = (): void => {
     const messages = getMessages(state.locale);
     document.documentElement.lang = messages.htmlLang;
     applyTheme(state.theme);
+
+    if (!board) {
+      root.innerHTML = renderLoadingShell(MOCK_BOARD_SNAPSHOT, state, messages);
+      return;
+    }
 
     const activeElId =
       document.activeElement instanceof HTMLElement ? document.activeElement.id : '';
@@ -129,8 +142,22 @@ const bootstrap = async (): Promise<void> => {
     if (action === 'set-tab' && button.dataset.tab) {
       state.activeTab = button.dataset.tab as BoardTab;
       render();
+    } else if (action === 'set-theme' && button.dataset.theme) {
+      const value = button.dataset.theme;
+      state.theme = value === 'light' || value === 'dark' ? value : 'system';
+      try {
+        window.localStorage.setItem(STORAGE_THEME_KEY, state.theme);
+      } catch {
+        // 忽略受限存储环境
+      }
+      render();
     } else if (action === 'set-compute-tier' && button.dataset.tier) {
       state.computeTier = button.dataset.tier as ComputeTier | 'all';
+      render();
+    } else if (action === 'toggle-section' && button.dataset.section) {
+      const key = button.dataset.section;
+      if (expandedSections.has(key)) expandedSections.delete(key);
+      else expandedSections.add(key);
       render();
     } else if (action === 'copy-agent-prompt') {
       const prompt = state.locale === 'zh' ? AGENT_COPY_PROMPT_ZH : AGENT_COPY_PROMPT_EN;

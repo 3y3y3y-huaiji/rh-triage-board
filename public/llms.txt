@@ -10,6 +10,8 @@
   - `pullRequests`: Open PRs with labels, base SHA, diff status (`ok` | `truncated` | `overflow`), file list, additions/deletions.
   - `issues`: Open tracking issues (`#229`, `good first issue`, `batch`, etc.).
 - `GET /llms.txt`: This Agent-readable overview and triage rules summary.
+- `GET /skills/lean-proof-golfing.md`: Full Lean 4 & Mathlib proof-golfing and anti-slop style guide (downloadable/curl-ready).
+- `GET /skills/mathlib-pr-conventions.md`: Full Mathlib4 PR title, concise body, and LLM-disclosure conventions (downloadable/curl-ready).
 
 ## Triage Rules for AI Agents Before Opening a PR
 

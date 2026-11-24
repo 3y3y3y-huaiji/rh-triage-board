@@ -2,8 +2,28 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  :root.dark {
+    color-scheme: dark;
+  }
+
   html,
   body {
     overflow-x: hidden;
+  }
+
+  select,
+  select option {
+    background-color: #ffffff;
+    color: #18181b;
+  }
+
+  :root.dark select,
+  :root.dark select option {
+    background-color: #18181b;
+    color: #f4f4f5;
   }
 }

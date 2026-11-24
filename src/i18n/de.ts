@@ -7,6 +7,9 @@ export const de: Messages = {
   dataSourceLive: 'Statischer Live-Snapshot (/data/board.json)',
   dataSourceMock: 'Offline-Mock-Fallback',
   updatedAtLabel: 'Stand',
+  loadingSnapshot: 'Live-Snapshot wird geladen…',
+  headerMoreLinks: 'Ökosystem & Agent-Feeds',
+  filesUnit: 'Dateien',
   themeLabel: 'Design',
   themeLight: 'Hell',
   themeDark: 'Dunkel',
@@ -22,8 +25,20 @@ export const de: Messages = {
   recommendedRebaseLabel: 'Rebase auf',
   megaRefactorBannerTitle: 'Mega-Refactor / Globales Konfliktrisiko',
   megaRefactorBannerDesc:
-    'PR mit Diff-Overflow oder 0 gemeldeten Dateien erkannt. Niemals als konfliktfrei werten; auf Queue-Kopf rebasen oder warten.',
-  megaRefactorBadge: 'Mega-Refactor / Global Conflict Risk',
+    'PR mit Diff-Overflow oder großflächigem Clumping erkannt. Niemals als konfliktfrei werten; auf Queue-Kopf rebasen oder warten.',
+  megaRefactorBadge: 'Mega-Refactor',
+  diffStatusLabels: {
+    overflow: 'Diff-Overflow',
+    truncated: 'Gekürzter Diff',
+    massive: 'Großes Refactoring',
+  },
+  pagination: {
+    showMorePrefix: 'Mehr anzeigen',
+    showAll: 'Alle anzeigen',
+    collapse: 'Einklappen',
+    showingOf: 'Angezeigt',
+    moreItemsPrefix: '+',
+  },
   stats: {
     openPrs: 'Offene PRs',
     queued: 'In Queue',

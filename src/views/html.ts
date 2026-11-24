@@ -24,6 +24,21 @@ export const formatTimestamp = (iso: string): string => {
   return iso.replace('T', ' ').replace(/\.\d+Z$/, 'Z');
 };
 
+export const formatNumber = (value: number): string =>
+  Number.isFinite(value) ? value.toLocaleString('en-US') : '0';
+
+export const formatCompactNumber = (value: number): string => {
+  if (!Number.isFinite(value)) return '0';
+  const abs = Math.abs(value);
+  if (abs >= 1_000_000) return `${(value / 1_000_000).toFixed(2)}M`;
+  if (abs >= 10_000) return `${Math.round(value / 1_000)}k`;
+  if (abs >= 1_000) return `${(value / 1_000).toFixed(1)}k`;
+  return formatNumber(value);
+};
+
+export const formatRebaseTarget = (baseRef: string, baseSha: string): string =>
+  baseRef === 'main' ? `main (${baseSha})` : baseRef;
+
 export const matchesSearch = (
   query: string,
   fields: Array<string | number | undefined>,
