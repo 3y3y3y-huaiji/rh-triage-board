@@ -26,6 +26,22 @@
 - **每 15 分钟定时刷新（`sync-board.yml`）**：以 `contents: read` 只读检出代码，拉取 `leanprover-community/riemann-hypothesis` 最新 PR/Issue/Commit 状态后构建发布，绝不向 `main` 提交任何数据文件。
 - **每 6 小时线上巡检（`smoke.yml`）**：只读验证首页挂载节点、CSP/安全响应头、`/favicon.svg`、`/robots.txt`、`/llms.txt`、`/skills/*` 与 `/data/board.json` 契约。
 
+## 外部准点定时触发器（Cloudflare Cron Worker）
+
+GitHub Actions 原生 `schedule` 触发器在免费队列高峰期（尤其是 `:00/:15/:30/:45`）常出现数小时延迟甚至静默丢单。为此本仓在 `infra/cron-worker/` 提供独立部署的零 HTTP 入口 Cron Trigger Worker（`rh-triage-cron`），与 Cloudflare Pages 纯静态站点完全解耦，每 15 分钟通过 `workflow_dispatch` 准点触发 `sync-board.yml`（并在整 6 小时 UTC 窗口联动触发 `smoke.yml`）。
+
+1. **部署 Cron Worker**：
+
+   ```bash
+   pnpm dlx wrangler@4 deploy --config infra/cron-worker/wrangler.jsonc
+   ```
+
+2. **创建并写入最小权限 Fine-grained PAT（仅授予本仓库 `Actions: Read and write`）**：
+
+   ```bash
+   pnpm dlx wrangler@4 secret put GITHUB_DISPATCH_TOKEN --config infra/cron-worker/wrangler.jsonc
+   ```
+
 ### 线上版本查看与回滚
 
 ```bash

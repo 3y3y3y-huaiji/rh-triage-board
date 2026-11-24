@@ -9,7 +9,7 @@ on:
         required: false
         default: https://rh-triage-board.pages.dev
   schedule:
-    - cron: '0 */6 * * *'
+    - cron: '19 */6 * * *'
 
 permissions:
   contents: read

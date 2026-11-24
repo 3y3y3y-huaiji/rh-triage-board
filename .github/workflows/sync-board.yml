@@ -1,11 +1,18 @@
 name: Sync · 定时数据同步
-run-name: Sync · ${{ github.event_name }}
+run-name: Sync · ${{ inputs.source || github.event_name }}
 
 # 严格只读代码仓库，严禁将 public/data/board.json commit 回 main。
 on:
   schedule:
-    - cron: '*/15 * * * *'
+    # 错开整点与整一刻（:00/:15/:30/:45）高峰，减少 GitHub Actions 原生调度器延迟与丢单。
+    - cron: '8,23,38,53 * * * *'
   workflow_dispatch:
+    inputs:
+      source:
+        description: '触发来源（manual / cloudflare-cron）'
+        required: false
+        default: 'manual'
+        type: string
 
 concurrency:
   group: sync-board
