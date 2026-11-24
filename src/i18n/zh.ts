@@ -7,6 +7,7 @@ export const zh: Messages = {
   dataSourceLive: '实时静态快照 (/data/board.json)',
   dataSourceMock: '离线 Mock 兜底快照',
   updatedAtLabel: '快照时间',
+  refreshIntervalLabel: '每 15 分钟自动刷新',
   loadingSnapshot: '正在加载实时协作快照…',
   headerMoreLinks: '生态导航 & Agent 入口',
   filesUnit: '个文件',

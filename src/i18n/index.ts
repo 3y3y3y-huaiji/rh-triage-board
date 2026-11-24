@@ -22,13 +22,13 @@ export const DICTS: Record<Locale, Messages> = {
 };
 
 export const normalizeLocale = (value: string | null | undefined): Locale => {
-  if (!value) return 'zh';
+  if (!value) return 'en';
   const lower = value.toLowerCase();
-  if (lower.startsWith('en')) return 'en';
+  if (lower.startsWith('zh')) return 'zh';
   if (lower.startsWith('fr')) return 'fr';
   if (lower.startsWith('de')) return 'de';
   if (lower.startsWith('ja')) return 'ja';
-  return 'zh';
+  return 'en';
 };
 
 export const getMessages = (locale: Locale): Messages => DICTS[locale];

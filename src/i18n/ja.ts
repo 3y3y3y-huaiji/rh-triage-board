@@ -7,6 +7,7 @@ export const ja: Messages = {
   dataSourceLive: '静的ライブスナップショット (/data/board.json)',
   dataSourceMock: 'オフライン Mock フォールバック',
   updatedAtLabel: '更新日時',
+  refreshIntervalLabel: '15分ごとに自動更新',
   loadingSnapshot: '最新スナップショットを読み込み中…',
   headerMoreLinks: 'エコシステム & Agent 入口',
   filesUnit: 'ファイル',

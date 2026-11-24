@@ -28,12 +28,14 @@ describe('i18n locale parity', () => {
     }
   });
 
-  it('normalizeLocale 正确识别多语种代码并安全回退', () => {
+  it('normalizeLocale 正确识别多语种代码并默认回退到 en', () => {
     expect(normalizeLocale('zh-CN')).toBe('zh');
     expect(normalizeLocale('en-US')).toBe('en');
     expect(normalizeLocale('fr-FR')).toBe('fr');
     expect(normalizeLocale('de')).toBe('de');
     expect(normalizeLocale('ja-JP')).toBe('ja');
-    expect(normalizeLocale(undefined)).toBe('zh');
+    expect(normalizeLocale('sv-SE')).toBe('en');
+    expect(normalizeLocale('ru')).toBe('en');
+    expect(normalizeLocale(undefined)).toBe('en');
   });
 });

@@ -43,6 +43,8 @@ describe('views structural & security contracts', () => {
     const html = renderBoardShell(board, 'http-error', baseState(), getMessages('zh'));
 
     expect(html).toContain('data-testid="data-source-badge"');
+    expect(html).toContain('data-testid="refresh-interval-badge"');
+    expect(html).toContain('每 15 分钟自动刷新');
     expect(html).toContain('data-testid="mega-refactor-banner"');
     expect(html).toContain('Mega-Refactor');
     expect(html).toContain('data-testid="subsumed-badge"');
