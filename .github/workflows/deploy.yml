@@ -107,6 +107,7 @@ jobs:
             if node scripts/smoke.mjs; then
               exit 0
             fi
+            echo "冒烟第 ${attempt} 次未通过，10 秒后重试..."
             sleep 10
           done
           exit 1
