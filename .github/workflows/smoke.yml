@@ -1,0 +1,30 @@
+name: Smoke · 线上巡检
+run-name: Smoke · ${{ inputs.origin || 'pages.dev' }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      origin:
+        description: 目标站点源
+        required: false
+        default: https://rh-triage-board.pages.dev
+  schedule:
+    - cron: '0 */6 * * *'
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: 线上首页与数据快照巡检
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: 探测首页与 /data/board.json
+        env:
+          RH_BOARD_ORIGIN: ${{ inputs.origin || vars.RH_BOARD_ORIGIN || 'https://rh-triage-board.pages.dev' }}
+        run: node scripts/smoke.mjs

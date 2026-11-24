@@ -1,0 +1,180 @@
+name: CI · 应用
+run-name: CI · ${{ github.ref_name }} · ${{ github.event_name }}
+
+on:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      base:
+        description: '可选 diff 基线 ref / SHA'
+        required: false
+        default: ''
+  workflow_call:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  changes:
+    name: 变更分类
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      docs_only: ${{ steps.detect.outputs.docs_only }}
+      workflows: ${{ steps.detect.outputs.workflows }}
+      workflows_only: ${{ steps.detect.outputs.workflows_only }}
+      static: ${{ steps.detect.outputs.static }}
+      test: ${{ steps.detect.outputs.test }}
+      build: ${{ steps.detect.outputs.build }}
+      e2e: ${{ steps.detect.outputs.e2e }}
+      deps: ${{ steps.detect.outputs.deps }}
+      deployable: ${{ steps.detect.outputs.deployable }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: 分类改动
+        id: detect
+        env:
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before || github.event.inputs.base }}
+        run: node scripts/detect-changes.mjs --base "$BASE"
+
+  docs-check:
+    name: 文档不变量检查
+    needs: changes
+    if: needs.changes.outputs.docs_only == 'true' || needs.changes.outputs.workflows == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: 文档不变量校验
+        run: node scripts/verify-docs.mjs
+
+  actionlint:
+    name: Actions 工作流静态检查
+    needs: changes
+    if: needs.changes.outputs.workflows == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: actionlint
+        run: docker run --rm -v "$PWD:/repo" -w /repo rhysd/actionlint:1.7.7
+
+  static:
+    name: 静态检查
+    needs: changes
+    if: needs.changes.outputs.static == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12.21.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --prefer-offline
+      - run: pnpm run format:check
+      - run: pnpm run lint
+      - run: pnpm run typecheck
+      - run: pnpm run verify:docs
+
+  test:
+    name: 单元测试
+    needs: changes
+    if: needs.changes.outputs.test == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12.21.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --prefer-offline
+      - run: pnpm test
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage
+          path: coverage/
+          retention-days: 7
+          if-no-files-found: ignore
+
+  build:
+    name: 构建产物
+    needs: changes
+    if: needs.changes.outputs.build == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12.21.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --prefer-offline
+      - run: pnpm run build
+      - run: pnpm run verify:build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          retention-days: 1
+
+  e2e:
+    name: 浏览器端到端
+    needs: [changes, build]
+    if: needs.changes.outputs.e2e == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12.21.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --prefer-offline
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+      - name: Playwright UI 契约验证
+        env:
+          RH_E2E_CHANNEL: chrome
+        run: pnpm run e2e
+
+  audit:
+    name: 依赖审计
+    needs: changes
+    if: needs.changes.outputs.deps == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12.21.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: pnpm audit --prod --audit-level high

@@ -1,0 +1,109 @@
+name: Deploy · 应用
+run-name: Deploy · ${{ github.ref_name }}
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  gate:
+    name: 判断来源与产物范围
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      direct: ${{ steps.detect.outputs.direct }}
+      deployable: ${{ steps.classify.outputs.deployable }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: 是否为 PR 合并提交
+        id: detect
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            echo "direct=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          merged=$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/pulls" --jq '[.[] | select(.merged_at != null)] | length')
+          if [ "$merged" -gt 0 ]; then
+            echo "direct=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "direct=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: 判定是否涉及可部署产物
+        id: classify
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE: ${{ github.event.before }}
+        run: |
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            echo "deployable=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          node scripts/detect-changes.mjs --base "$BASE"
+
+  ci:
+    name: 直接 push 的 CI
+    needs: gate
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      needs.gate.outputs.direct == 'true' &&
+      needs.gate.outputs.deployable == 'true'
+    uses: ./.github/workflows/ci.yml
+
+  deploy:
+    name: 部署至 Cloudflare Pages
+    needs: [gate, ci]
+    if: |
+      always() &&
+      github.ref == 'refs/heads/main' &&
+      needs.gate.result == 'success' &&
+      (github.event_name == 'workflow_dispatch' || needs.gate.outputs.deployable == 'true') &&
+      (needs.gate.outputs.direct == 'false' || needs.ci.result == 'success')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12.21.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --prefer-offline
+      - name: 采集上游最新看板数据
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: pnpm run fetch:board
+      - run: pnpm run build
+      - run: pnpm run verify:build
+      - name: 推送到 Cloudflare Pages
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          PROJECT_NAME: ${{ vars.CLOUDFLARE_PROJECT_NAME || 'rh-triage-board' }}
+        run: pnpm dlx wrangler@4 pages deploy dist --project-name="$PROJECT_NAME" --branch=main
+      - name: 线上冒烟
+        env:
+          RH_BOARD_ORIGIN: ${{ vars.RH_BOARD_ORIGIN || 'https://rh-triage-board.pages.dev' }}
+        run: |
+          for attempt in 1 2 3 4 5; do
+            if node scripts/smoke.mjs; then
+              exit 0
+            fi
+            sleep 10
+          done
+          exit 1

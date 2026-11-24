@@ -1,0 +1,45 @@
+name: Sync · 定时数据同步
+run-name: Sync · ${{ github.event_name }}
+
+# 严格只读代码仓库，严禁将 public/data/board.json commit 回 main。
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: sync-board
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  sync-and-deploy:
+    name: 拉取上游快照并构建部署 Pages
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12.21.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --prefer-offline
+      - name: 拉取 leanprover-community/riemann-hypothesis 状态
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: pnpm run fetch:board
+      - name: 构建纯静态产物
+        run: pnpm run build
+      - name: 校验产物完整性
+        run: pnpm run verify:build
+      - name: 部署到 Cloudflare Pages
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          PROJECT_NAME: ${{ vars.CLOUDFLARE_PROJECT_NAME || 'rh-triage-board' }}
+        run: pnpm dlx wrangler@4 pages deploy dist --project-name="$PROJECT_NAME" --branch=main

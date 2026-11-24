@@ -1,0 +1,22 @@
+# rh-triage-board — Agent-Friendly Endpoint Guide
+
+> Pure-static triage snapshot for `leanprover-community/riemann-hypothesis`.
+> Zero GitHub API rate-limit cost for downstream AI Agents and contributors.
+
+## Machine-Readable Endpoints
+
+- `GET /data/board.json`: Pre-fetched static snapshot (updated every 15 minutes via GitHub Actions) containing:
+  - `mainBranch`: Current `main` SHA, short SHA, commit message, and timestamp.
+  - `pullRequests`: Open PRs with labels, base SHA, diff status (`ok` | `truncated` | `overflow`), file list, additions/deletions.
+  - `issues`: Open tracking issues (`#229`, `good first issue`, `batch`, etc.).
+- `GET /llms.txt`: This Agent-readable overview and triage rules summary.
+
+## Triage Rules for AI Agents Before Opening a PR
+
+1. **Check Mega-Refactor / Diff Overflow**: If a PR reports `diffStatus: "overflow"` or `changedFilesCount: 0` with `extra large` / clump keywords (e.g., `#324`-style file-clumping), treat `src/` as high-conflict and wait or rebase on the queue head.
+2. **Avoid Subsumed Fragment PRs**: If an open PR `#NNN` is listed inside a Batch PR's title/body, do not open duplicate fixes or rebase the subsumed PR.
+3. **Follow Upstream `AGENTS.md` (#312) & Mathlib Conventions**:
+   - Title format: `<type>(<optional-scope>): <subject>` (imperative, lowercase start, no trailing period, <= 100 chars).
+   - Never edit frozen Comparator files (`src/Challenge.lean`, `comparator.json`, `export-targets.txt`, `comparator/*`).
+   - Prefer `lia` (over `omega` for `Nat`/`Int`) and `grind` / `positivity` / `linarith` where sufficient; do not replace `nlinarith` with verbose multi-line `have`/`calc` chains; never use `attribute [-instance]` or `attribute [local instance high]` hacks.
+   - Check `lake build` locally, keep zero `sorry` / custom axioms, and never report local build/Comparator timings as proof claims unless explicitly requested.
