@@ -28,7 +28,7 @@
 
 ## 外部准点定时触发器（Cloudflare Cron Worker）
 
-GitHub Actions 原生 `schedule` 触发器在免费队列高峰期（尤其是 `:00/:15/:30/:45`）常出现数小时延迟甚至静默丢单。为此本仓在 `infra/cron-worker/` 提供独立部署的零 HTTP 入口 Cron Trigger Worker（`rh-triage-cron`），与 Cloudflare Pages 纯静态站点完全解耦，每 15 分钟通过 `workflow_dispatch` 准点触发 `sync-board.yml`（并在整 6 小时 UTC 窗口联动触发 `smoke.yml`）。
+GitHub Actions 原生 `schedule` 触发器在免费队列高峰期（尤其是 `:00/:15/:30/:45`）常出现数小时延迟甚至静默丢单。为此本仓在 `infra/cron-worker/` 提供独立部署的零 HTTP 入口 Cron Trigger Worker（`rh-triage-cron`），与 Cloudflare Pages 纯静态站点完全解耦，采用**专用单仓 GitHub App**（不绑定个人账号、无 PAT 到期问题，仅授予 `Actions: Read and write`）换取短期 Installation Token，每 15 分钟通过 `workflow_dispatch` 准点触发 `sync-board.yml`（并在整 6 小时 UTC 窗口联动触发 `smoke.yml`）。
 
 1. **部署 Cron Worker**：
 
@@ -36,10 +36,12 @@ GitHub Actions 原生 `schedule` 触发器在免费队列高峰期（尤其是 `
    pnpm dlx wrangler@4 deploy --config infra/cron-worker/wrangler.jsonc
    ```
 
-2. **创建并写入最小权限 Fine-grained PAT（仅授予本仓库 `Actions: Read and write`）**：
+2. **配置 GitHub App 机密（只安装到 `rh-triage-board` 并仅开 `Actions: Read and write`）**：
 
    ```bash
-   pnpm dlx wrangler@4 secret put GITHUB_DISPATCH_TOKEN --config infra/cron-worker/wrangler.jsonc
+   pnpm dlx wrangler@4 secret put GITHUB_APP_ID --config infra/cron-worker/wrangler.jsonc
+   pnpm dlx wrangler@4 secret put GITHUB_INSTALLATION_ID --config infra/cron-worker/wrangler.jsonc
+   Get-Content -Raw <path-to-private-key.pem> | pnpm dlx wrangler@4 secret put GITHUB_APP_PRIVATE_KEY --config infra/cron-worker/wrangler.jsonc
    ```
 
 ### 线上版本查看与回滚
