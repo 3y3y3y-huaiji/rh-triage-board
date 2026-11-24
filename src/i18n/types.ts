@@ -7,6 +7,7 @@ export interface Messages {
   dataSourceLive: string;
   dataSourceMock: string;
   updatedAtLabel: string;
+  refreshIntervalLabel: string;
   loadingSnapshot: string;
   headerMoreLinks: string;
   filesUnit: string;

@@ -89,6 +89,9 @@ export const renderHeader = ({
           <span class="rounded-md border border-zinc-200/80 bg-zinc-50 px-2 py-1 font-mono text-[11px] text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
             ${escapeHtml(messages.updatedAtLabel)}: ${escapeHtml(formatTimestamp(snapshot.generatedAt))}
           </span>
+          <span data-testid="refresh-interval-badge" class="rounded-md border border-emerald-200/80 bg-emerald-50/70 px-2 py-1 text-[11px] font-medium text-emerald-700 dark:border-emerald-500/25 dark:bg-emerald-500/10 dark:text-emerald-300">
+            ${escapeHtml(messages.refreshIntervalLabel)}
+          </span>
           <label class="inline-flex items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-2 py-1 text-zinc-700 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200">
             <span class="text-zinc-400 dark:text-zinc-500">${escapeHtml(messages.localeLabel)}</span>
             <select id="locale-select" aria-label="${escapeHtml(messages.localeLabel)}" class="cursor-pointer bg-transparent font-medium text-zinc-900 outline-none dark:bg-zinc-900 dark:text-zinc-100">

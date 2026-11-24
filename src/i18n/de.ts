@@ -7,6 +7,7 @@ export const de: Messages = {
   dataSourceLive: 'Statischer Live-Snapshot (/data/board.json)',
   dataSourceMock: 'Offline-Mock-Fallback',
   updatedAtLabel: 'Stand',
+  refreshIntervalLabel: 'Alle 15 Min. aktualisiert',
   loadingSnapshot: 'Live-Snapshot wird geladen…',
   headerMoreLinks: 'Ökosystem & Agent-Feeds',
   filesUnit: 'Dateien',

@@ -8,6 +8,7 @@ export const fr: Messages = {
   dataSourceLive: 'Instantané statique en direct (/data/board.json)',
   dataSourceMock: 'Jeu de données Mock hors ligne',
   updatedAtLabel: 'Instantané',
+  refreshIntervalLabel: 'Actualisé toutes les 15 min',
   loadingSnapshot: 'Chargement de l’instantané…',
   headerMoreLinks: 'Écosystème & Flux Agent',
   filesUnit: 'fichiers',
