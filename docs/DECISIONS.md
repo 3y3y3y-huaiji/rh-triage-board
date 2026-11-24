@@ -33,3 +33,9 @@
 - **决定**：核心分析逻辑全部收拢到零 DOM/fetch 依赖的 `src/domain/`，受 `vitest.config.ts` 高阈值覆盖率检查与 ESLint `max-lines` 约束，`coverage.exclude` 仅限纯类型文件与薄入口 `src/main.ts`，并由 `src/architecture-invariants.test.ts` 锁死。
 - **原因**：防止 UI 视图与业务逻辑耦合导致测试退化，也防止 AI 或协作者通过扩大 `coverage.exclude` 绕过门禁。
 - **禁止回退的方案**：禁止向 `vitest.config.ts` 的 `coverage.exclude` 塞入业务逻辑模块，或在 `src/domain/` 中引入 `document` / `fetch`。
+
+## ADR-06：双协议（Apache-2.0 OR MulanPSL-2.0）与供应链 SHA 锁定 {#adr-06}
+
+- **决定**：本项目以 `(Apache-2.0 OR MulanPSL-2.0)` 双协议对外授权，同时将 `.github/workflows/` 内全部第三方 GitHub Action 锁定到 40 位 commit SHA 并关闭 checkout 凭证持久化（`persist-credentials: false`）。
+- **原因**：双协议兼顾国际开源生态兼容（Apache-2.0）与国内友好合规（木兰宽松许可证 v2）；工作流 SHA 锁定与最小权限则是对抗第三方 Action tag 投毒、满足 OpenSSF Scorecard 与长期无人值守运行的基础防线。
+- **禁止回退的方案**：禁止撤除双协议之一，也禁止在工作流中使用未锁定 SHA 的浮动主版本标签（如 `@v4`）。

@@ -2,8 +2,16 @@
   "name": "rh-triage-board",
   "private": true,
   "type": "module",
-  "license": "Apache-2.0",
+  "license": "(Apache-2.0 OR MulanPSL-2.0)",
   "description": "Pure-static Cloudflare Pages triage board for leanprover-community/riemann-hypothesis: merge queue, conflict radar, mega-refactor alerts, and up-for-grabs tasks.",
+  "homepage": "https://rh-triage-board.pages.dev",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/3y3y3y-huaiji/rh-triage-board.git"
+  },
+  "bugs": {
+    "url": "https://github.com/3y3y3y-huaiji/rh-triage-board/issues"
+  },
   "packageManager": "pnpm@12.21.0",
   "engines": {
     "node": ">=24"

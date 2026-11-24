@@ -13,6 +13,8 @@ const errors = [];
 const requiredFiles = [
   'index.html',
   '_headers',
+  'favicon.svg',
+  'robots.txt',
   'llms.txt',
   'skills/lean-proof-golfing.md',
   'skills/mathlib-pr-conventions.md',

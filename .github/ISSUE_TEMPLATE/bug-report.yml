@@ -1,0 +1,36 @@
+name: Bug Report · 问题反馈
+description: 反馈看板 UI 渲染、分诊规则（撞车雷达 / Batch 收编 / Mega-Refactor）或同步数据异常
+labels: ['bug']
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: 问题描述 / Summary
+      description: 简述观察到的现象与预期行为
+    validations:
+      required: true
+  - type: input
+    id: url
+    attributes:
+      label: 复现页面或相关 PR / URL or PR number
+      placeholder: https://rh-triage-board.pages.dev 或 upstream #324
+  - type: input
+    id: browser
+    attributes:
+      label: 浏览器与视口 / Browser & Viewport
+      placeholder: Chrome 131 / 1440x900 或 Mobile 390x844
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤 / Steps to Reproduce
+      placeholder: |
+        1. 打开页面或切换至 ...
+        2. 观察到 ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 预期行为 / Expected Behavior
+    validations:
+      required: true
