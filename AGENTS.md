@@ -26,7 +26,7 @@
 1. **包管理唯一用 `pnpm`**（Node >= 24）：严禁使用 `npm`、`npx` 或 `yarn`；所有构建与检查通过 `pnpm run` 或 `pnpm exec` 执行。
 2. **纯静态零后端架构**：不引入 Cloudflare Workers、KV、R2 或 `functions/` 目录；前端仅请求同源 `/data/board.json`（失败自动回退内置 Mock），**绝不在浏览器端直连 `api.github.com`**（见 [ADR-01](docs/DECISIONS.md#adr-01)）。
 3. **禁止将同步数据 commit 回 `main`**：`public/data/board.json` 已加入 `.gitignore`，`.github/workflows/sync-board.yml` 必须保持 `contents: read` 并直接构建部署 Cloudflare Pages。
-4. **Mega-Refactor Diff 溢出保护**：当上游 PR 出现 `changed_files === 0` 且命中超大变更或 `/files` API 422 / 截断时，**严禁判定为零冲突**，必须显式标记 `Mega-Refactor / Global Conflict Risk`（见 [ADR-02](docs/DECISIONS.md#adr-02)）。
+4. **Mega-Refactor Diff 溢出保护**：当上游 PR 出现 `changed_files === 0` 且命中超大变更、改动文件数 > 200，或 `/files` API 422 / 截断时，**严禁判定为零冲突**，必须显式标记 `Mega-Refactor / Global Conflict Risk`，并将其隔离出常规路径碰撞聚类与 Batch 收编计算（见 [ADR-02](docs/DECISIONS.md#adr-02)）。
 5. **Batch 收编降噪不可误杀**：仅当 Batch PR 明确列出收编语义与 `#NNN` 且目标 PR 仍为 Open 时才标记 Subsumed；避免将 `depends on` / `review of` 误判为收编（见 [ADR-03](docs/DECISIONS.md#adr-03)）。
 6. **逻辑层与视图层解耦及覆盖率白名单**：`src/domain/` 严禁导入 DOM/fetch/视图模块；`vitest.config.ts` 的 `coverage.exclude` 仅允许纯类型声明与薄入口 `src/main.ts`，由 `src/architecture-invariants.test.ts` 锁定。
 7. **多语种同步、供应链与复杂度上限**：用户可见文案必须同步更新 `src/i18n/` 下全部 5 个语种文件；第三方 Action 必须锁定 40 位 commit SHA 且 `persist-credentials: false`（见 [ADR-06](docs/DECISIONS.md#adr-06)）；单文件受 ESLint `max-lines` 限制，严禁使用空 `catch {}` 或 `continue-on-error: true`。

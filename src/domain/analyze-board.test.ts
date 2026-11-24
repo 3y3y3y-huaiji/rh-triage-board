@@ -9,7 +9,7 @@ describe('analyzeBoard', () => {
     expect(analyzed.summary.totalOpenPrs).toBe(MOCK_BOARD_SNAPSHOT.pullRequests.length);
     expect(analyzed.hasGlobalConflictRisk).toBe(true);
     expect(analyzed.megaRefactors.map((m) => m.prNumber)).toEqual([998]);
-    expect(analyzed.subsumedBy[995]).toEqual([998]);
+    expect(analyzed.subsumedBy[995]).toBeUndefined();
     expect(analyzed.subsumedBy[993]).toEqual([996]);
     expect(analyzed.mergeQueue[0]?.pr.number).toBe(998);
     expect(analyzed.conflictGroups.length).toBeGreaterThanOrEqual(2);

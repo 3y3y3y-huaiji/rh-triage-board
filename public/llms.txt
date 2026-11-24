@@ -7,17 +7,18 @@
 
 - `GET /data/board.json`: Pre-fetched static snapshot (updated every 15 minutes via GitHub Actions) containing:
   - `mainBranch`: Current `main` SHA, short SHA, commit message, and timestamp.
-  - `pullRequests`: Open PRs with labels, base SHA, diff status (`ok` | `truncated` | `overflow`), file list, additions/deletions.
-  - `issues`: Open tracking issues (`#229`, `good first issue`, `batch`, etc.).
+  - `pullRequests`: Open PRs with labels (including upstream `building` / `inbox` / `roadmap`), `draft` state, base SHA, diff status (`ok` | `truncated` | `overflow`), file list, additions/deletions.
+  - `issues`: Open tracking issues (`#229`, `good first issue`, `batch`, `roadmap`, etc.) with full label pass-through.
 - `GET /llms.txt`: This Agent-readable overview and triage rules summary.
 - `GET /skills/lean-proof-golfing.md`: Full Lean 4 & Mathlib proof-golfing and anti-slop style guide (downloadable/curl-ready).
 - `GET /skills/mathlib-pr-conventions.md`: Full Mathlib4 PR title, concise body, and LLM-disclosure conventions (downloadable/curl-ready).
 
 ## Triage Rules for AI Agents Before Opening a PR
 
-1. **Check Mega-Refactor / Diff Overflow**: If a PR reports `diffStatus: "overflow"` or `changedFilesCount: 0` with `extra large` / clump keywords (e.g., `#324`-style file-clumping), treat `src/` as high-conflict and wait or rebase on the queue head.
-2. **Avoid Subsumed Fragment PRs**: If an open PR `#NNN` is listed inside a Batch PR's title/body, do not open duplicate fixes or rebase the subsumed PR.
-3. **Follow Upstream `AGENTS.md` (#312) & Mathlib Conventions**:
+1. **Check Mega-Refactor / Diff Overflow**: If a PR reports `diffStatus: "overflow"` or `changedFilesCount: 0` with `extra large` / clump keywords, or touches more than 200 files (e.g., `#324`-style file-clumping), treat `src/` as high-conflict and wait or rebase on the queue head. Mega-refactors are isolated from ordinary path-collision clusters and subsumption links; do not treat them as evidence that unrelated PRs are conflict-free.
+2. **Avoid Subsumed Fragment PRs**: If an open PR `#NNN` is explicitly `includes/supersedes`-referenced by a Batch PR, or is a non-mega PR whose file set is a strict subset of that Batch PR, do not open duplicate fixes or rebase the subsumed PR. Partial file sharing is only an overlap, and mega-refactors never subsume or get subsumed.
+3. **Respect Official Queue Labels**: `building` PRs lead the merge queue, followed by `inbox` and explicit batch PRs; draft/closed PRs must not be treated as active queue heads. `roadmap`-labeled open issues are surfaced first in Up for Grabs.
+4. **Follow Upstream `AGENTS.md` (#312) & Mathlib Conventions**:
    - Title format: `<type>(<optional-scope>): <subject>` (imperative, lowercase start, no trailing period, <= 100 chars).
    - Never edit frozen Comparator files (`src/Challenge.lean`, `comparator.json`, `export-targets.txt`, `comparator/*`).
    - Prefer `lia` (over `omega` for `Nat`/`Int`) and `grind` / `positivity` / `linarith` where sufficient; do not replace `nlinarith` with verbose multi-line `have`/`calc` chains; never use `attribute [-instance]` or `attribute [local instance high]` hacks.

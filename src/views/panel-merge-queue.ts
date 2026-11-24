@@ -18,6 +18,16 @@ export interface QueuePanelFilters {
 
 const MAX_SUBSUMED_CHIPS = 6;
 
+const UPSTREAM_LABEL_BADGES = ['building', 'inbox', 'roadmap'] as const;
+
+const renderUpstreamLabelBadges = (labels: string[]): string =>
+  UPSTREAM_LABEL_BADGES.filter((target) => labels.some((label) => label.toLowerCase() === target))
+    .map(
+      (label) =>
+        `<span data-testid="upstream-label-badge" class="rounded border border-sky-200 bg-sky-50 px-1.5 py-0.5 font-mono font-medium text-sky-700 dark:border-sky-500/30 dark:bg-sky-500/10 dark:text-sky-300">${escapeHtml(label)}</span>`,
+    )
+    .join('');
+
 const renderPaginationFooter = (
   sectionId: string,
   total: number,
@@ -101,6 +111,7 @@ export const renderMergeQueuePanel = (
                   <a href="${safeHref(entry.pr.url)}" target="_blank" rel="noopener noreferrer" class="font-mono text-xs font-semibold text-zinc-900 hover:text-indigo-600 hover:underline dark:text-zinc-100 dark:hover:text-indigo-300">#${entry.pr.number}</a>
                   ${entry.isBatch ? `<span class="rounded border border-violet-200 bg-violet-50 px-1.5 py-0.5 font-medium text-violet-700 dark:border-violet-500/30 dark:bg-violet-500/10 dark:text-violet-300">${escapeHtml(messages.queuePanel.batchTag)}</span>` : ''}
                   ${entry.isMegaRefactor ? `<span class="rounded border border-rose-200 bg-rose-50 px-1.5 py-0.5 font-medium text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/15 dark:text-rose-300">${escapeHtml(messages.megaRefactorBadge)}</span>` : ''}
+                  ${renderUpstreamLabelBadges(entry.pr.labels)}
                   <span class="rounded border border-zinc-200/80 bg-white px-1.5 py-0.5 text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">${escapeHtml(messages.topics[entry.topic])}</span>
                 </div>
                 <h3 class="mt-1.5 break-words text-sm font-medium leading-snug text-zinc-900 dark:text-zinc-100">

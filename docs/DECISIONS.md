@@ -12,15 +12,15 @@
 
 ## ADR-02：Diff 溢出与 `changed_files === 0` 大型 PR 强制标记全局冲突风险 {#adr-02}
 
-- **决定**：当 GitHub API 返回 HTTP 422（diff 过大）、`/files` 达到 300 条截断上限，或 `changed_files === 0` 但具有超大变更规模 / `extra large` / clump 特征（如 `#324` 类全仓 file-clumping PR）时，冲突雷达将其标记为 `Mega-Refactor / Global Conflict Risk`。
-- **原因**：GitHub API 在 diff 溢出时会返回空文件列表或截断列表，若按常规文件交集计算会被误判为“零冲突”，从而误导协作者在全仓重构期间提交高冲突 PR。
-- **禁止回退的方案**：禁止仅因 `files.length === 0` 就把大型重构 PR 判定为“无文件冲突”或“低风险”。
+- **决定**：当 GitHub API 返回 HTTP 422（diff 过大）、`/files` 达到 300 条截断上限，或 `changed_files === 0` 但具有超大变更规模 / `extra large` / clump 特征（如 `#324` 类全仓 file-clumping PR），或改动文件数 > 200 时，冲突雷达将其标记为 `Mega-Refactor / Global Conflict Risk`，并**隔离出常规路径碰撞聚类与 Batch 收编计算**。
+- **原因**：GitHub API 在 diff 溢出时会返回空文件列表或截断列表，若按常规文件交集计算会被误判为“零冲突”，从而误导协作者在全仓重构期间提交高冲突 PR；若让全仓 PR 参与倒排索引，还会把数十个互不相关的 PR 串成单个巨型碰撞簇，并让小型 PR 误吞其编号。
+- **禁止回退的方案**：禁止仅因 `files.length === 0` 就把大型重构 PR 判定为“无文件冲突”或“低风险”，也禁止让 Mega-Refactor PR 进入常规碰撞簇或收编映射。
 
 ## ADR-03：Batch 收编（Subsumed）识别与负向语境隔离 {#adr-03}
 
-- **决定**：仅在具备 Batch/Rollup 语义（标签或标题/正文关键词）的 PR 中提取被收编的 `#NNN` Open PR，且显式过滤 `depends on`、`follow-up to`、`review of`、`stacked on` 等非收编上下文。
-- **原因**：在高频协作期，队列头部的 Batch PR 会批量打包十余个小 PR；明确标出已被收编的碎片 PR 可显著降低维护者重复 Review 与贡献者无效 Rebase 的噪声，同时防止普通依赖引用被误标记为已收编。
-- **禁止回退的方案**：禁止对所有 PR 正文里的任意 `#NNN` 无差别标记为“已被收编”。
+- **决定**：仅在具备 Batch/Rollup 语义（标签或标题/正文关键词）的 PR 中提取被收编的 `#NNN` Open PR，且显式过滤 `depends on`、`follow-up to`、`review of`、`stacked on` 等非收编上下文；Mega-Refactor 不参与收编计算，隐式收编只允许双方均为非 Mega PR 的严格文件集包含，并禁止较小或更晚创建的 PR 反向收编较大/更早的 PR，部分重合仅算 `Overlaps`。
+- **原因**：在高频协作期，队列头部的 Batch PR 会批量打包十余个小 PR；明确标出已被收编的碎片 PR 可显著降低维护者重复 Review 与贡献者无效 Rebase 的噪声，同时防止普通依赖引用或小 PR 对全仓 Mega-Refactor 的误吞被标记为“已收编”。
+- **禁止回退的方案**：禁止对所有 PR 正文里的任意 `#NNN` 无差别标记为“已被收编”，也禁止让小型 PR 收编改动文件数远超自身的 Mega-Refactor。
 
 ## ADR-04：内置高保真 Mock 兜底，保证离线与 E2E 稳定性 {#adr-04}
 

@@ -4,6 +4,8 @@ import {
   classifyDiffStatus,
   collectBoardSnapshot,
   filterTrackedIssues,
+  normalizeIssue,
+  normalizePullRequest,
   parseNextLink,
 } from './fetch-board.mjs';
 
@@ -75,6 +77,37 @@ describe('fetch-board', () => {
     ).toBe('truncated');
   });
 
+  it('透传上游 official labels、draft 状态与 roadmap Issue 标签', () => {
+    const pr = normalizePullRequest({
+      pr: {
+        number: 1238,
+        title: 'feat: streamline proof maintenance',
+        body: '',
+        user: { login: 'jack' },
+        html_url: 'https://github.com/leanprover-community/riemann-hypothesis/pull/1238',
+        labels: [{ name: 'building' }, { name: 'inbox' }, { name: 'roadmap' }],
+        draft: true,
+        changed_files: 2,
+        additions: 10,
+        deletions: 4,
+      },
+      files: [],
+      diffStatus: 'ok',
+    });
+    expect(pr.labels).toEqual(['building', 'inbox', 'roadmap']);
+    expect(pr.draft).toBe(true);
+
+    const issue = normalizeIssue({
+      number: 77,
+      title: 'Roadmap: tidy the proof workflow',
+      labels: [{ name: 'roadmap' }],
+      user: { login: 'maintainer' },
+      comments: 4,
+    });
+    expect(issue.labels).toEqual(['roadmap']);
+    expect(issue.comments).toBe(4);
+  });
+
   it('端到端 mock GitHub API 收集 main、溢出 PR、常规 PR 与 #229', async () => {
     const routes = new Map([
       [
@@ -115,7 +148,7 @@ describe('fetch-board', () => {
               created_at: '2026-11-24T09:10:00Z',
               updated_at: '2026-11-24T09:15:00Z',
               draft: false,
-              labels: [{ name: 'extra small' }],
+              labels: [{ name: 'extra small' }, { name: 'building' }, { name: 'inbox' }],
               base: { ref: 'main', sha: 'c9883164b0b3d762cee21f889d03d59a53b3ba3b' },
               head: { ref: 'perf/nlinarith' },
             },
@@ -169,7 +202,7 @@ describe('fetch-board', () => {
               title: 'Clean docs',
               body: 'docs',
               user: { login: 'bob' },
-              labels: [{ name: 'good first issue' }],
+              labels: [{ name: 'good first issue' }, { name: 'roadmap' }],
               state: 'open',
             },
           ]),
@@ -204,6 +237,8 @@ describe('fetch-board', () => {
     expect(snapshot.pullRequests).toHaveLength(2);
     expect(snapshot.pullRequests[0]?.diffStatus).toBe('overflow');
     expect(snapshot.pullRequests[1]?.files[0]?.filename).toBe('src/Formalism/MainSup.lean');
+    expect(snapshot.pullRequests[1]?.labels).toEqual(['extra small', 'building', 'inbox']);
     expect(snapshot.issues.map((issue) => issue.number)).toEqual([229, 401]);
+    expect(snapshot.issues.find((issue) => issue.number === 401)?.labels).toContain('roadmap');
   });
 });

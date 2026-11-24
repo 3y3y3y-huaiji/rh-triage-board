@@ -27,6 +27,17 @@ describe('up-for-grabs', () => {
         labels: ['good first issue', 'documentation'],
         comments: 0,
       },
+      {
+        number: 1238,
+        title: 'Roadmap: streamline the proof maintenance workflow',
+        body: 'Long-term roadmap items for proof cleanup and review triage.',
+        author: 'maintainer',
+        url: 'https://github.com/leanprover-community/riemann-hypothesis/issues/1238',
+        createdAt: '2026-11-24T03:00:00Z',
+        updatedAt: '2026-11-24T04:00:00Z',
+        labels: ['roadmap'],
+        comments: 3,
+      },
     ];
     const megaRefactors: MegaRefactorAlert[] = [
       {
@@ -47,6 +58,8 @@ describe('up-for-grabs', () => {
     const lemmataTrack = tasks.find((task) => task.id === 'track-lemmata-mathlib');
     const docsTrack = tasks.find((task) => task.id === 'track-docs-triage-board');
 
+    expect(tasks[0]?.issueNumber).toBe(1238);
+    expect(tasks[0]?.labels).toContain('roadmap');
     expect(docIssue?.computeTier).toBe('no-compile');
     expect(docIssue?.avoidsRefactorHotspots).toBe(true);
     expect(docsTrack?.hotspotStatus).toBe('safe');

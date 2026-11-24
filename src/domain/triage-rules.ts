@@ -15,7 +15,7 @@ const BATCH_TEXT_PATTERN = /\b(?:batch|rollup|roll-up|combined|subsumes|combines
 const MEGA_REFACTOR_KEYWORDS =
   /\b(?:clump|clumping|thin wrapper|file-clumping|monolith|import-graph)\b/i;
 
-const MEGA_CHANGED_FILES_THRESHOLD = 250;
+const MEGA_CHANGED_FILES_THRESHOLD = 200;
 const MEGA_LINES_THRESHOLD = 5000;
 
 /** 判断标签列表中是否包含指定名称（忽略大小写）。 */
@@ -47,6 +47,7 @@ export const isBatchPr = (pr: Pick<PullRequestRecord, 'labels' | 'title' | 'body
 /**
  * 识别巨型重构 / Diff 溢出 PR（例如 #324 全仓 clump 类 PR）。
  * 当 API 因 diff 过大返回 changed_files === 0 或 422 / 截断时，绝不能误判为零冲突。
+ * 改动文件数超过 200 的 PR 同样视为 Mega-Refactor，避免其污染常规路径碰撞聚类。
  */
 export const detectMegaRefactor = (pr: PullRequestRecord): MegaRefactorAlert | null => {
   const totalLines = pr.additions + pr.deletions;
@@ -85,6 +86,9 @@ export const detectMegaRefactor = (pr: PullRequestRecord): MegaRefactorAlert | n
     reason,
   };
 };
+
+/** 判断 PR 是否属于应隔离展示的 Mega-Refactor。 */
+export const isMegaRefactorPr = (pr: PullRequestRecord): boolean => detectMegaRefactor(pr) !== null;
 
 /** 按标题、标签和改动路径自动聚类到五大维护主题之一。 */
 export const classifyTopic = (pr: PullRequestRecord): TopicClusterId => {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { MOCK_BOARD_SNAPSHOT } from '../data/mock-board';
 import { analyzeBoard } from '../domain/analyze-board';
-import { getMessages } from '../i18n';
+import { getMessages, resolveInitialLocale } from '../i18n';
 import { renderBoardShell, renderLoadingShell, type BoardUiState } from './board-shell';
 import {
   escapeHtml,
@@ -27,6 +27,23 @@ const baseState = (overrides: Partial<BoardUiState> = {}): BoardUiState => ({
 });
 
 describe('views structural & security contracts', () => {
+  it('首次访问无本地偏好时默认渲染英文界面，仅信任已保存的语种偏好', () => {
+    expect(resolveInitialLocale(null)).toBe('en');
+    expect(resolveInitialLocale(undefined)).toBe('en');
+    expect(resolveInitialLocale('')).toBe('en');
+    expect(resolveInitialLocale('zh-CN')).toBe('zh');
+    expect(resolveInitialLocale('ja-JP')).toBe('ja');
+
+    const board = analyzeBoard(MOCK_BOARD_SNAPSHOT);
+    const locale = resolveInitialLocale(null);
+    const html = renderBoardShell(board, null, baseState({ locale }), getMessages(locale));
+
+    expect(html).toContain('Merge Queue · Linear Order');
+    expect(html).toContain('Open PRs');
+    expect(html).not.toContain('Merge Queue · 线性合并队列');
+    expect(html).not.toContain('队位');
+  });
+
   it('转义恶意 HTML、格式化大数字并消除重复 PR 基线后缀', () => {
     expect(escapeHtml('<script>alert(1)</script>')).toBe('&lt;script&gt;alert(1)&lt;/script&gt;');
     expect(safeHref('javascript:alert(1)')).toBe('#');

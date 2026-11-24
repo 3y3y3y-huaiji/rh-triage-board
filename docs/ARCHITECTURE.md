@@ -28,11 +28,11 @@
 
 ## 核心分析子模块（`src/domain/`）与界面契约
 
-1. **Mega-Refactor / Diff 溢出检测**：识别 `diffStatus` 为 `'overflow'` / `'truncated'`，或 `changedFilesCount === 0` 且命中超大改动 / `extra large` 标签 / clump 关键词的 PR（如全仓合并文件的 `#324` 类型 PR），将其纳入全局冲突风险提示。
-2. **Batch 收编识别（Subsumed）**：从 Batch/Rollup PR 的标题和正文中解析被合并收编的 `#NNN` Open PR，排除 `depends on`、`follow-up to`、`review of`、`stacked on` 等非收编引用，为队列、碰撞雷达与 Rebase 列表提供减噪标记。
-3. **PR 撞车雷达（Conflict Radar）**：基于精确文件路径与目录前缀建立倒排索引，聚类存在文件重叠的 PR 组，并按 `Performance/Imports`、`Dead Code/Deduplication`、`Tactic Modernization`、`Docs/Infra`、`Math Refactor` 五大主题自动分组。
-4. **线性合并队列与 Rebase 推荐**：识别带队列/高优先级标签或已收编碎片 PR 的 Batch PR，按优先级排出线性顺序并标注推荐 Rebase 基准 commit。
-5. **低门槛任务池（Up for Grabs）**：合并上游跟踪 Issue 与常规可独立推进任务，标注算力门槛（`免编译` / `16GB 笔记本可跑` / `需大内存 Runner`）、碰撞热区避坑提示以及上游 `AGENTS.md`（#312）规范指引。
+1. **Mega-Refactor / Diff 溢出检测**：识别 `diffStatus` 为 `'overflow'` / `'truncated'`，或 `changedFilesCount === 0` 且命中超大改动 / `extra large` 标签 / clump 关键词，或改动文件数 > 200 的 PR（如全仓合并文件的 `#324` 类型 PR），将其纳入全局冲突风险提示；此类 PR 完全隔离出常规路径碰撞聚类与 Batch 收编计算，只在 Mega-Refactor 预警区展示。
+2. **Batch 收编识别（Subsumed）**：从 Batch/Rollup PR 的标题和正文中解析被合并收编的 `#NNN` Open PR，排除 `depends on`、`follow-up to`、`review of`、`stacked on` 等非收编引用；仅当显式声明 `includes/supersedes #NNN`，或双方均为非 Mega PR 且满足严格文件集包含（且禁止较小/更晚创建的 PR 反向收编）时才标记，部分文件重合降级为普通 `Overlaps`。
+3. **PR 撞车雷达（Conflict Radar）**：基于非 Mega PR 的精确文件路径与目录前缀建立倒排索引，聚类存在文件重叠的 PR 组，避免单个 Mega-Refactor 把数十个无关 PR 串成巨型簇；并按 `Performance/Imports`、`Dead Code/Deduplication`、`Tactic Modernization`、`Docs/Infra`、`Math Refactor` 五大主题自动分组。
+4. **线性合并队列与 Rebase 推荐**：优先将上游 `building` 标签 PR 置顶，其次 `inbox`、显式 Batch 与队列/高优先级标签 PR；已关闭或草稿 PR 不进入活跃队头，并为每个 PR 标注推荐 Rebase 基准 commit。
+5. **低门槛任务池（Up for Grabs）**：合并上游跟踪 Issue 与常规可独立推进任务，`roadmap` 标签 Issue 优先置顶；标注算力门槛（`免编译` / `16GB 笔记本可跑` / `需大内存 Runner`）、碰撞热区避坑提示以及上游 `AGENTS.md`（#312）规范指引。
 6. **置顶刷新栏与 Agent 静态接口**：页面顶部固定展示 `<time>` 精确 UTC 刷新时间、每 30 秒实时递增的相对耗时、上游 `main` 短 SHA、每 15 分钟轮询标识与手动刷新按钮；同时在站点根路径提供 `public/llms.txt`、`public/skills/lean-proof-golfing.md` 与 `public/skills/mathlib-pr-conventions.md`，供外部 AI Agent 免限流读取。
 
 ## 纯静态同步策略摘要（详见 ADR-01）
