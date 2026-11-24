@@ -8,10 +8,12 @@ import type {
 } from './types';
 
 const TIER_RANK: Record<MergeQueueEntry['priorityTier'], number> = {
-  'merge-queue': 0,
-  'batch-head': 1,
-  'batch-queue': 2,
-  priority: 3,
+  building: 0,
+  'merge-queue': 1,
+  'batch-head': 2,
+  inbox: 3,
+  'batch-queue': 4,
+  priority: 5,
 };
 
 const resolvePriorityTier = (
@@ -19,6 +21,9 @@ const resolvePriorityTier = (
   subsumedCount: number,
   isMega: boolean,
 ): MergeQueueEntry['priorityTier'] => {
+  if (hasLabel(pr, 'building')) {
+    return 'building';
+  }
   if (
     hasLabel(pr, 'merge queue') ||
     hasLabel(pr, 'ready to merge') ||
@@ -28,6 +33,9 @@ const resolvePriorityTier = (
   }
   if (subsumedCount >= 2 || (isBatchPr(pr) && isMega)) {
     return 'batch-head';
+  }
+  if (hasLabel(pr, 'inbox')) {
+    return 'inbox';
   }
   if (hasLabel(pr, 'batch queue') || isBatchPr(pr)) {
     return 'batch-queue';
@@ -54,9 +62,16 @@ export const analyzeMergeQueue = (
 
   const candidates = prs
     .filter((pr) => {
+      // 草稿 PR 与已关闭 PR 均不得占据活跃合并队列队头（快照只含 Open PR）。
       if (pr.draft) return false;
       const subsumedCount = subsumedByBatch.get(pr.number)?.length ?? 0;
-      return isQueueLabeled(pr.labels) || subsumedCount >= 2 || megaSet.has(pr.number);
+      return (
+        isQueueLabeled(pr.labels) ||
+        hasLabel(pr, 'building') ||
+        hasLabel(pr, 'inbox') ||
+        subsumedCount >= 2 ||
+        megaSet.has(pr.number)
+      );
     })
     .map((pr) => {
       const subsumedPrNumbers = [...new Set(subsumedByBatch.get(pr.number) ?? [])].sort(

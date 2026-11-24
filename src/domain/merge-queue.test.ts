@@ -69,4 +69,19 @@ describe('merge-queue', () => {
     expect(queue[1]?.recommendedBaseSha).toBe('PR#998');
     expect(queue[1]?.subsumedPrNumbers).toEqual([980, 981]);
   });
+
+  it('building 标签占据队头，其次 inbox 与显式 batch，草稿 PR 不进入活跃队列', () => {
+    const prs = [
+      makePr(1001, ['inbox']),
+      makePr(1002, ['batch queue']),
+      makePr(1003, ['building']),
+      makePr(1004, ['building'], true),
+    ];
+
+    const queue = analyzeMergeQueue(prs, mainBranch, [], []);
+    expect(queue.map((item) => item.pr.number)).toEqual([1003, 1001, 1002]);
+    expect(queue[0]?.priorityTier).toBe('building');
+    expect(queue[1]?.priorityTier).toBe('inbox');
+    expect(queue[2]?.priorityTier).toBe('batch-queue');
+  });
 });

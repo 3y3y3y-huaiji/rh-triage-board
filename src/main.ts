@@ -3,7 +3,7 @@ import { loadBoardSnapshot, type BoardFallbackReason } from './data/load-board';
 import { MOCK_BOARD_SNAPSHOT } from './data/mock-board';
 import { analyzeBoard } from './domain/analyze-board';
 import type { AnalyzedBoard, ComputeTier, TopicClusterId } from './domain/types';
-import { getMessages, normalizeLocale } from './i18n';
+import { getMessages, normalizeLocale, resolveInitialLocale } from './i18n';
 import type { Locale } from './i18n/types';
 import './index.css';
 import {
@@ -28,11 +28,11 @@ const applyTheme = (theme: ThemePreference): void => {
 const readStoredLocale = (): Locale => {
   try {
     const saved = window.localStorage.getItem(STORAGE_LOCALE_KEY);
-    if (saved) return normalizeLocale(saved);
+    return resolveInitialLocale(saved);
   } catch {
     // 忽略受限存储环境
+    return resolveInitialLocale(null);
   }
-  return normalizeLocale(navigator.language);
 };
 
 const readStoredTheme = (): ThemePreference => {

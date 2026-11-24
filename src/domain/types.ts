@@ -97,7 +97,7 @@ export interface MergeQueueEntry {
   subsumedPrNumbers: number[];
   recommendedBaseRef: string;
   recommendedBaseSha: string;
-  priorityTier: 'merge-queue' | 'batch-head' | 'batch-queue' | 'priority';
+  priorityTier: 'building' | 'inbox' | 'merge-queue' | 'batch-head' | 'batch-queue' | 'priority';
   topic: TopicClusterId;
 }
 

@@ -211,6 +211,8 @@ const main = async () => {
 
       await page.goto(origin, { waitUntil: 'networkidle' });
       await page.waitForSelector('[data-testid="mega-refactor-banner"]');
+      // 首次访问（无 localStorage，浏览器 locale=zh-CN）必须默认英文界面
+      await page.waitForFunction(() => globalThis.document.documentElement.lang === 'en');
       await assertLayout(page, `${vp.name} initial`);
 
       // 验证 Needs Rebase 默认分页折叠与展开
@@ -231,9 +233,9 @@ const main = async () => {
           !globalThis.document.documentElement.classList.contains('dark'),
       );
 
-      // 验证多语种切换（en / ja）
-      await page.selectOption('#locale-select', 'en');
-      await page.waitForFunction(() => globalThis.document.documentElement.lang === 'en');
+      // 验证多语种切换（zh / ja），确认语言切换器仍可用
+      await page.selectOption('#locale-select', 'zh');
+      await page.waitForFunction(() => globalThis.document.documentElement.lang === 'zh-CN');
       await page.selectOption('#locale-select', 'ja');
       await page.waitForFunction(() => globalThis.document.documentElement.lang === 'ja');
 

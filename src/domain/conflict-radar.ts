@@ -53,7 +53,7 @@ const buildSuggestedBatchName = (
 /**
  * 冲突雷达与主题聚类分析：
  * 1. 先提取 Mega-Refactor / Diff 溢出 PR，标记全局冲突风险；
- * 2. 构建文件路径与目录前缀倒排索引，聚类碰撞 PR 组；
+ * 2. 将 Mega-Refactor PR 隔离出常规文件/目录碰撞索引，避免单个全仓 PR 把大量无关 PR 串成巨型簇；
  * 3. 按五大主题聚类全部 Open PR，并区分活跃 PR 与已被 Batch 收编 PR。
  */
 export const analyzeConflicts = (
@@ -66,6 +66,7 @@ export const analyzeConflicts = (
     if (alert) megaRefactors.push(alert);
   }
   megaRefactors.sort((a, b) => a.prNumber - b.prNumber);
+  const megaPrNumbers = new Set(megaRefactors.map((alert) => alert.prNumber));
 
   const fileOwners = new Map<string, Set<number>>();
   const prefixOwners = new Map<string, Set<number>>();
@@ -73,6 +74,7 @@ export const analyzeConflicts = (
 
   for (const pr of prs) {
     prByNumber.set(pr.number, pr);
+    if (megaPrNumbers.has(pr.number)) continue;
     for (const file of pr.files) {
       const fileSet = fileOwners.get(file.filename) ?? new Set<number>();
       fileSet.add(pr.number);
@@ -183,6 +185,7 @@ export const analyzeConflicts = (
   }
 
   for (const pr of [...prs].sort((a, b) => b.number - a.number)) {
+    if (megaPrNumbers.has(pr.number)) continue;
     const topic = classifyTopic(pr);
     const bucket = topicMap.get(topic)!;
     if ((subsumedBy[pr.number]?.length ?? 0) > 0) {

@@ -13,6 +13,7 @@ const QUALIFYING_ISSUE_LABELS = [
   'cleanup',
   'documentation',
   'triage',
+  'roadmap',
 ];
 
 const CURATED_STARTER_TRACKS: Array<{
@@ -141,6 +142,9 @@ const evaluateHotspotAvoidance = (
   };
 };
 
+const isRoadmapIssue = (issue: IssueRecord): boolean =>
+  issue.labels.some((label) => label.toLowerCase() === 'roadmap');
+
 const isQualifyingIssue = (issue: IssueRecord): boolean => {
   if (issue.number === 229) return true;
   const lowerLabels = issue.labels.map((label) => label.toLowerCase());
@@ -148,7 +152,9 @@ const isQualifyingIssue = (issue: IssueRecord): boolean => {
     return true;
   }
   const text = `${issue.title} ${issue.body}`.toLowerCase();
-  return /\b(?:good first|batch|tech debt|technical debt|cleanup|non-ascii|lemmata)\b/.test(text);
+  return /\b(?:good first|batch|tech debt|technical debt|cleanup|non-ascii|lemmata|roadmap)\b/.test(
+    text,
+  );
 };
 
 /**
@@ -159,38 +165,42 @@ export const analyzeUpForGrabs = (
   hotspotPrefixes: Record<string, number[]>,
   megaRefactors: MegaRefactorAlert[],
 ): UpForGrabsTask[] => {
-  const issueTasks: UpForGrabsTask[] = issues.filter(isQualifyingIssue).map((issue) => {
-    const computeTier = inferComputeTier(issue);
-    const targetPaths = inferTargetPaths(issue);
-    const hotspot = evaluateHotspotAvoidance(
-      targetPaths,
-      computeTier,
-      hotspotPrefixes,
-      megaRefactors,
-    );
+  const issueTasks: UpForGrabsTask[] = issues
+    .filter(isQualifyingIssue)
+    .sort((a, b) => Number(isRoadmapIssue(b)) - Number(isRoadmapIssue(a)) || a.number - b.number)
+    .map((issue) => {
+      const computeTier = inferComputeTier(issue);
+      const targetPaths = inferTargetPaths(issue);
+      const hotspot = evaluateHotspotAvoidance(
+        targetPaths,
+        computeTier,
+        hotspotPrefixes,
+        megaRefactors,
+      );
 
-    return {
-      id: `issue-${issue.number}`,
-      kind: 'issue',
-      issueNumber: issue.number,
-      titleZh: `#${issue.number} ${issue.title}`,
-      titleEn: `#${issue.number} ${issue.title}`,
-      summaryZh:
-        issue.number === 229
-          ? '上游技术债总追踪 Issue，适合认领去重、注释清理与独立小模块重构。'
-          : issue.body.slice(0, 140) || '上游开放认领 Issue，欢迎结合 AGENTS.md 规范拆分为小 PR。',
-      summaryEn:
-        issue.number === 229
-          ? 'Upstream technical-debt tracker for modular cleanup, deduplication, and concise isolated PRs.'
-          : issue.body.slice(0, 140) ||
-            'Upstream open issue suitable for a focused, single-purpose PR.',
-      url: issue.url,
-      labels: issue.labels,
-      computeTier,
-      ...hotspot,
-      targetPaths,
-    };
-  });
+      return {
+        id: `issue-${issue.number}`,
+        kind: 'issue',
+        issueNumber: issue.number,
+        titleZh: `#${issue.number} ${issue.title}`,
+        titleEn: `#${issue.number} ${issue.title}`,
+        summaryZh:
+          issue.number === 229
+            ? '上游技术债总追踪 Issue，适合认领去重、注释清理与独立小模块重构。'
+            : issue.body.slice(0, 140) ||
+              '上游开放认领 Issue，欢迎结合 AGENTS.md 规范拆分为小 PR。',
+        summaryEn:
+          issue.number === 229
+            ? 'Upstream technical-debt tracker for modular cleanup, deduplication, and concise isolated PRs.'
+            : issue.body.slice(0, 140) ||
+              'Upstream open issue suitable for a focused, single-purpose PR.',
+        url: issue.url,
+        labels: issue.labels,
+        computeTier,
+        ...hotspot,
+        targetPaths,
+      };
+    });
 
   const curatedTasks: UpForGrabsTask[] = CURATED_STARTER_TRACKS.map((track) => {
     const hotspot = evaluateHotspotAvoidance(

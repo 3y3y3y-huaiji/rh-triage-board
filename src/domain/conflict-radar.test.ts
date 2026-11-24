@@ -77,4 +77,41 @@ describe('conflict-radar', () => {
       result.topicGroups.find((g) => g.topic === 'math-refactor')?.subsumedPrs.map((p) => p.number),
     ).toEqual([983]);
   });
+
+  it('将 Mega-Refactor 隔离出路径碰撞聚类，避免 59k 文件全仓 PR 串成 90+ PR 巨型簇', () => {
+    const sharedFiles = Array.from(
+      { length: 90 },
+      (_, index) => `src/Module${index}/Part${index}.lean`,
+    );
+    const mega = makePr(97, 'chore: auto-format the entire repository', sharedFiles, {
+      changedFilesCount: 59672,
+      additions: 200000,
+      deletions: 180000,
+    });
+    const fragments = sharedFiles.map((filename, index) =>
+      makePr(1000 + index, `refactor: tidy module ${index}`, [filename]),
+    );
+
+    const result = analyzeConflicts([mega, ...fragments], {});
+    expect(result.megaRefactors.map((alert) => alert.prNumber)).toEqual([97]);
+    expect(result.conflictGroups).toEqual([]);
+    expect(result.hotspotPrefixes).toEqual({});
+    expect(result.topicGroups.flatMap((group) => group.activePrs)).toHaveLength(90);
+  });
+
+  it('12k 文件 Mega #1021 不串并常规 PR，仅保留真实小范围碰撞', () => {
+    const mega = makePr(1021, 'refactor: move modules in bulk', ['src/A/X.lean', 'src/A/Y.lean'], {
+      changedFilesCount: 12354,
+      additions: 90000,
+      deletions: 80000,
+    });
+    const smallA = makePr(1064, 'chore: remove unused modules', ['src/A/X.lean', 'src/A/Y.lean']);
+    const smallB = makePr(1066, 'fix: adjust shared module', ['src/A/X.lean']);
+
+    const result = analyzeConflicts([mega, smallA, smallB], {});
+    expect(result.megaRefactors.map((alert) => alert.prNumber)).toEqual([1021]);
+    expect(result.conflictGroups).toHaveLength(1);
+    expect(result.conflictGroups[0]?.prNumbers).toEqual([1064, 1066]);
+    expect(result.conflictGroups[0]?.prNumbers).not.toContain(1021);
+  });
 });

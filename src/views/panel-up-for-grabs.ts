@@ -54,6 +54,9 @@ export const renderUpForGrabsPanel = (
             .map((task) => {
               const title = locale === 'zh' ? task.titleZh : task.titleEn;
               const summary = locale === 'zh' ? task.summaryZh : task.summaryEn;
+              const roadmapBadge = task.labels.some((label) => label.toLowerCase() === 'roadmap')
+                ? `<span data-testid="roadmap-badge" class="rounded-md border border-emerald-200 bg-emerald-50 px-2 py-0.5 font-mono font-medium text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300">roadmap</span>`
+                : '';
               const hotspotClass = task.avoidsRefactorHotspots
                 ? 'border-emerald-200 bg-emerald-50/80 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300'
                 : 'border-amber-200 bg-amber-50/80 text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300';
@@ -87,6 +90,7 @@ export const renderUpForGrabsPanel = (
 
               return `<article class="rounded-lg border border-zinc-200/80 bg-zinc-50/50 p-3 transition hover:border-zinc-300 dark:border-zinc-800/90 dark:bg-zinc-950/50 dark:hover:border-zinc-700">
                 <div class="flex flex-wrap items-center gap-1.5 text-[11px]">
+                  ${roadmapBadge}
                   <span class="rounded-md border px-2 py-0.5 font-medium ${TIER_BADGE_STYLE[task.computeTier]}">${escapeHtml(messages.computeTiers[task.computeTier])}</span>
                   <span data-testid="hotspot-badge" class="rounded-md border px-2 py-0.5 font-medium ${hotspotClass}">${escapeHtml(hotspotLabel)}</span>
                 </div>
