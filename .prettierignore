@@ -3,4 +3,5 @@ coverage/
 node_modules/
 pnpm-lock.yaml
 public/data/board.json
+public/skills/
 .wrangler/

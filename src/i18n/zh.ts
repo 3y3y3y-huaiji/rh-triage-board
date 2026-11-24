@@ -7,6 +7,9 @@ export const zh: Messages = {
   dataSourceLive: '实时静态快照 (/data/board.json)',
   dataSourceMock: '离线 Mock 兜底快照',
   updatedAtLabel: '快照时间',
+  loadingSnapshot: '正在加载实时协作快照…',
+  headerMoreLinks: '生态导航 & Agent 入口',
+  filesUnit: '个文件',
   themeLabel: '主题',
   themeLight: '浅色',
   themeDark: '深色',
@@ -22,8 +25,20 @@ export const zh: Messages = {
   recommendedRebaseLabel: '建议 Rebase 至',
   megaRefactorBannerTitle: 'Mega-Refactor / 全局冲突高危预警',
   megaRefactorBannerDesc:
-    '检测到 Diff 溢出或文件数归零的全仓重构 PR（例如 clump 类合批），切勿误判为零冲突，请优先避让或基于队头 PR 变基。',
-  megaRefactorBadge: 'Mega-Refactor / Global Conflict Risk',
+    '检测到 Diff 溢出或超大规模全仓重构 PR（例如 clump 合批），切勿误判为零冲突，请优先避让或基于队头 PR 变基。',
+  megaRefactorBadge: 'Mega-Refactor',
+  diffStatusLabels: {
+    overflow: 'Diff 溢出',
+    truncated: '列表截断',
+    massive: '超大规模重构',
+  },
+  pagination: {
+    showMorePrefix: '展开剩余',
+    showAll: '显示全部',
+    collapse: '收起',
+    showingOf: '显示',
+    moreItemsPrefix: '+',
+  },
   stats: {
     openPrs: 'Open PRs',
     queued: '队列中',

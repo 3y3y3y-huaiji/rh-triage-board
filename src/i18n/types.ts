@@ -7,6 +7,9 @@ export interface Messages {
   dataSourceLive: string;
   dataSourceMock: string;
   updatedAtLabel: string;
+  loadingSnapshot: string;
+  headerMoreLinks: string;
+  filesUnit: string;
   themeLabel: string;
   themeLight: string;
   themeDark: string;
@@ -23,6 +26,18 @@ export interface Messages {
   megaRefactorBannerTitle: string;
   megaRefactorBannerDesc: string;
   megaRefactorBadge: string;
+  diffStatusLabels: {
+    overflow: string;
+    truncated: string;
+    massive: string;
+  };
+  pagination: {
+    showMorePrefix: string;
+    showAll: string;
+    collapse: string;
+    showingOf: string;
+    moreItemsPrefix: string;
+  };
   stats: {
     openPrs: string;
     queued: string;

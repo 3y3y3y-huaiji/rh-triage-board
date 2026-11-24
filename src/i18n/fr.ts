@@ -8,6 +8,9 @@ export const fr: Messages = {
   dataSourceLive: 'Instantané statique en direct (/data/board.json)',
   dataSourceMock: 'Jeu de données Mock hors ligne',
   updatedAtLabel: 'Instantané',
+  loadingSnapshot: 'Chargement de l’instantané…',
+  headerMoreLinks: 'Écosystème & Flux Agent',
+  filesUnit: 'fichiers',
   themeLabel: 'Thème',
   themeLight: 'Clair',
   themeDark: 'Sombre',
@@ -24,8 +27,20 @@ export const fr: Messages = {
   recommendedRebaseLabel: 'Rebaser sur',
   megaRefactorBannerTitle: 'Alerte Mega-Refactor / Risque Global',
   megaRefactorBannerDesc:
-    'PR avec débordement de diff ou zéro fichier signalé détectée. Ne présumez jamais aucun conflit ; attendez ou rebasez sur la tête de file.',
-  megaRefactorBadge: 'Mega-Refactor / Global Conflict Risk',
+    'PR avec débordement de diff ou refonte massive détectée. Ne présumez jamais aucun conflit ; attendez ou rebasez sur la tête de file.',
+  megaRefactorBadge: 'Mega-Refactor',
+  diffStatusLabels: {
+    overflow: 'Débordement diff',
+    truncated: 'Diff tronqué',
+    massive: 'Refonte massive',
+  },
+  pagination: {
+    showMorePrefix: 'Afficher',
+    showAll: 'Tout afficher',
+    collapse: 'Réduire',
+    showingOf: 'Affichage',
+    moreItemsPrefix: '+',
+  },
   stats: {
     openPrs: 'PR ouvertes',
     queued: 'En file',

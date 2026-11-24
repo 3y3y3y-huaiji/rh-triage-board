@@ -13,7 +13,25 @@ export interface HeaderRenderState {
   locale: Locale;
   theme: ThemePreference;
   messages: Messages;
+  loading?: boolean;
 }
+
+const renderEcosystemChips = (locale: Locale): string =>
+  ECOSYSTEM_LINKS.map((link) => {
+    const label = locale === 'zh' ? link.labelZh : link.labelEn;
+    const desc = locale === 'zh' ? link.descriptionZh : link.descriptionEn;
+    return `<a href="${safeHref(link.href)}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(desc)}" class="inline-flex items-center gap-1 rounded-md border border-zinc-200/80 bg-zinc-50/80 px-2 py-0.5 text-xs font-medium text-zinc-700 transition hover:border-zinc-300 hover:bg-white hover:text-zinc-950 dark:border-zinc-800 dark:bg-zinc-900/80 dark:text-zinc-300 dark:hover:border-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-white">
+      <span>${escapeHtml(label)}</span>
+      <span aria-hidden="true" class="text-[10px] text-zinc-400">↗</span>
+    </a>`;
+  }).join('');
+
+const renderAgentEndpoints = (messages: Messages): string =>
+  `<div data-testid="agent-endpoints" class="flex flex-wrap items-center gap-1.5 text-xs">
+    <span class="font-medium text-zinc-500 dark:text-zinc-400">${escapeHtml(messages.agentEndpointsTitle)}</span>
+    <a href="/data/board.json" target="_blank" rel="noopener noreferrer" class="rounded-md border border-indigo-200/80 bg-indigo-50/70 px-2 py-0.5 font-mono text-[11px] font-medium text-indigo-700 transition hover:bg-indigo-100 dark:border-indigo-500/30 dark:bg-indigo-500/10 dark:text-indigo-300 dark:hover:bg-indigo-500/20">/data/board.json</a>
+    <a href="/llms.txt" target="_blank" rel="noopener noreferrer" class="rounded-md border border-indigo-200/80 bg-indigo-50/70 px-2 py-0.5 font-mono text-[11px] font-medium text-indigo-700 transition hover:bg-indigo-100 dark:border-indigo-500/30 dark:bg-indigo-500/10 dark:text-indigo-300 dark:hover:bg-indigo-500/20">/llms.txt</a>
+  </div>`;
 
 export const renderHeader = ({
   snapshot,
@@ -21,11 +39,21 @@ export const renderHeader = ({
   locale,
   theme,
   messages,
+  loading = false,
 }: HeaderRenderState): string => {
   const isMock = fallbackReason !== null || snapshot.source === 'mock';
-  const sourceBadgeClass = isMock
-    ? 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950/70 dark:text-amber-200 dark:border-amber-700'
-    : 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950/70 dark:text-emerald-200 dark:border-emerald-700';
+  const dotClass = loading ? 'bg-zinc-400' : isMock ? 'bg-amber-500' : 'bg-emerald-500';
+  const sourceBadgeClass = loading
+    ? 'border-zinc-200 bg-zinc-100 text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300'
+    : isMock
+      ? 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300'
+      : 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300';
+
+  const sourceLabel = loading
+    ? messages.loadingSnapshot
+    : isMock
+      ? messages.dataSourceMock
+      : messages.dataSourceLive;
 
   const localeOptions = SUPPORTED_LOCALES.map(
     (item) =>
@@ -38,63 +66,67 @@ export const renderHeader = ({
     { value: 'dark', label: messages.themeDark },
   ];
 
-  const ecosystemChips = ECOSYSTEM_LINKS.map((link) => {
-    const label = locale === 'zh' ? link.labelZh : link.labelEn;
-    const desc = locale === 'zh' ? link.descriptionZh : link.descriptionEn;
-    return `<a href="${safeHref(link.href)}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(desc)}" class="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-700 transition hover:border-indigo-400 hover:text-indigo-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-indigo-400 dark:hover:text-indigo-300">
-      <span>${escapeHtml(label)}</span>
-      <span aria-hidden="true" class="text-[10px] opacity-60">↗</span>
-    </a>`;
-  }).join('');
+  const ecosystemChips = renderEcosystemChips(locale);
+  const agentEndpoints = renderAgentEndpoints(messages);
 
-  return `<header class="border-b border-slate-200 bg-white/90 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90">
-    <div class="mx-auto max-w-7xl px-4 py-4 sm:px-6">
-      <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+  return `<header class="sticky top-0 z-20 border-b border-zinc-200/80 bg-white/90 backdrop-blur-md dark:border-zinc-800/80 dark:bg-zinc-950/85">
+    <div class="mx-auto max-w-7xl px-4 py-3 sm:px-6">
+      <div class="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:justify-between">
         <div class="min-w-0">
           <div class="flex flex-wrap items-center gap-2">
-            <h1 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-2xl">${escapeHtml(messages.brandTitle)}</h1>
-            <a href="https://github.com/${escapeHtml(snapshot.repo)}" target="_blank" rel="noopener noreferrer" class="rounded-md border border-slate-200 bg-slate-100 px-2 py-0.5 font-mono text-xs text-slate-700 hover:border-indigo-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">${escapeHtml(snapshot.repo)}</a>
-            <span data-testid="data-source-badge" class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${sourceBadgeClass}">${escapeHtml(isMock ? messages.dataSourceMock : messages.dataSourceLive)}</span>
+            <span class="inline-flex h-6 w-6 items-center justify-center rounded-md bg-zinc-900 font-mono text-xs font-bold text-white dark:bg-zinc-100 dark:text-zinc-900">RH</span>
+            <h1 class="text-base font-semibold tracking-tight text-zinc-950 dark:text-zinc-50 sm:text-lg">${escapeHtml(messages.brandTitle)}</h1>
+            <a href="https://github.com/${escapeHtml(snapshot.repo)}" target="_blank" rel="noopener noreferrer" class="rounded-md border border-zinc-200 bg-zinc-100/80 px-2 py-0.5 font-mono text-[11px] text-zinc-600 transition hover:text-zinc-950 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200">${escapeHtml(snapshot.repo)}</a>
+            <span data-testid="data-source-badge" class="inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] font-medium ${sourceBadgeClass}">
+              <span class="h-1.5 w-1.5 rounded-full ${dotClass}"></span>
+              <span>${escapeHtml(sourceLabel)}</span>
+            </span>
           </div>
-          <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">${escapeHtml(messages.brandSubtitle)}</p>
+          <p class="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">${escapeHtml(messages.brandSubtitle)}</p>
         </div>
 
-        <div class="flex flex-wrap items-center gap-2.5 text-xs">
-          <span class="rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1.5 font-mono text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+        <div class="flex flex-wrap items-center gap-2 text-xs">
+          <span class="rounded-md border border-zinc-200/80 bg-zinc-50 px-2 py-1 font-mono text-[11px] text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
             ${escapeHtml(messages.updatedAtLabel)}: ${escapeHtml(formatTimestamp(snapshot.generatedAt))}
           </span>
-          <label class="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2.5 py-1 dark:border-slate-700 dark:bg-slate-800">
-            <span class="text-slate-500 dark:text-slate-400">${escapeHtml(messages.localeLabel)}</span>
-            <select id="locale-select" aria-label="${escapeHtml(messages.localeLabel)}" class="bg-transparent font-medium text-slate-800 outline-none dark:text-slate-100">
+          <label class="inline-flex items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-2 py-1 text-zinc-700 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200">
+            <span class="text-zinc-400 dark:text-zinc-500">${escapeHtml(messages.localeLabel)}</span>
+            <select id="locale-select" aria-label="${escapeHtml(messages.localeLabel)}" class="cursor-pointer bg-transparent font-medium text-zinc-900 outline-none dark:bg-zinc-900 dark:text-zinc-100">
               ${localeOptions}
             </select>
           </label>
-          <label class="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2.5 py-1 dark:border-slate-700 dark:bg-slate-800">
-            <span class="text-slate-500 dark:text-slate-400">${escapeHtml(messages.themeLabel)}</span>
-            <select id="theme-select" aria-label="${escapeHtml(messages.themeLabel)}" class="bg-transparent font-medium text-slate-800 outline-none dark:text-slate-100">
-              ${themeOptions
-                .map(
-                  (opt) =>
-                    `<option value="${opt.value}" ${opt.value === theme ? 'selected' : ''}>${escapeHtml(opt.label)}</option>`,
-                )
-                .join('')}
-            </select>
-          </label>
+          <div role="group" aria-label="${escapeHtml(messages.themeLabel)}" class="inline-flex items-center rounded-md border border-zinc-200 bg-zinc-100/80 p-0.5 dark:border-zinc-800 dark:bg-zinc-900">
+            ${themeOptions
+              .map(
+                (opt) =>
+                  `<button type="button" data-action="set-theme" data-theme="${opt.value}" aria-pressed="${opt.value === theme}" class="rounded px-2 py-0.5 text-[11px] font-medium transition ${
+                    opt.value === theme
+                      ? 'bg-white text-zinc-950 shadow-2xs dark:bg-zinc-800 dark:text-zinc-50'
+                      : 'text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200'
+                  }">${escapeHtml(opt.label)}</button>`,
+              )
+              .join('')}
+          </div>
         </div>
       </div>
 
-      <div class="mt-3 flex flex-col gap-2 border-t border-slate-100 pt-3 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between">
-        <div class="flex flex-wrap items-center gap-1.5">
-          <span class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">${escapeHtml(messages.ecosystemTitle)}:</span>
+      <div class="mt-2.5 hidden flex-wrap items-center justify-between gap-2 border-t border-zinc-200/70 pt-2.5 dark:border-zinc-800/80 sm:flex">
+        <div class="flex min-w-0 flex-wrap items-center gap-1.5">
+          <span class="text-[11px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">${escapeHtml(messages.ecosystemTitle)}</span>
           ${ecosystemChips}
         </div>
-        <div data-testid="agent-endpoints" class="flex flex-wrap items-center gap-2 text-xs">
-          <span class="font-semibold text-indigo-700 dark:text-indigo-300">${escapeHtml(messages.agentEndpointsTitle)}:</span>
-          <a href="/data/board.json" target="_blank" rel="noopener noreferrer" class="rounded border border-indigo-200 bg-indigo-50 px-2 py-0.5 font-mono text-indigo-700 hover:bg-indigo-100 dark:border-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300">/data/board.json</a>
-          <a href="/llms.txt" target="_blank" rel="noopener noreferrer" class="rounded border border-indigo-200 bg-indigo-50 px-2 py-0.5 font-mono text-indigo-700 hover:bg-indigo-100 dark:border-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300">/llms.txt</a>
-          <span class="hidden text-slate-500 xl:inline dark:text-slate-400">${escapeHtml(messages.agentEndpointsDesc)}</span>
-        </div>
+        ${agentEndpoints}
       </div>
+
+      <details class="mt-2 border-t border-zinc-200/70 pt-2 dark:border-zinc-800/80 sm:hidden">
+        <summary class="cursor-pointer select-none text-xs font-medium text-zinc-600 dark:text-zinc-300">
+          ${escapeHtml(messages.headerMoreLinks)} (6 + API)
+        </summary>
+        <div class="mt-2 space-y-2">
+          <div class="flex flex-wrap gap-1.5">${ecosystemChips}</div>
+          ${agentEndpoints}
+        </div>
+      </details>
     </div>
   </header>`;
 };
